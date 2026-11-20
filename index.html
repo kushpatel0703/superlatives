@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Friendsgiving Superlatives</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout idea: a dim dinner-party stage. The host screen is a TV slide; the phone page is a stack of big tap targets. */
+  --bg: #1c0e19;
+  --panel: #2a1626;
+  --line: #4b2b43;
+  --ink: #f8ecdc;
+  --muted: #c3a9b8;
+  --gold: #f2b134;
+  --cran: #d0394f;
+  --sage: #8cc084;
+  --display: "Bagel Fat One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  --body: "Outfit", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: radial-gradient(120% 80% at 50% 0%, #351a2f 0%, var(--bg) 60%) fixed, var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { margin: 0; text-wrap: balance; font-weight: 400; }
+h2 { font-family: var(--display); font-size: 1.25rem; letter-spacing: .01em; color: var(--gold); }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.fine { color: var(--muted); font-size: .9rem; }
+
+.btn {
+  appearance: none; border: 1.5px solid var(--line); background: var(--panel);
+  border-radius: 999px; padding: .6rem 1.15rem; cursor: pointer; font-weight: 600;
+  transition: transform .08s ease, background .15s ease, border-color .15s ease;
+}
+.btn:hover { border-color: var(--muted); }
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--gold); border-color: var(--gold); color: #2a1408; }
+.btn.primary:hover { background: #ffc24f; }
+.btn.big { font-size: 1.15rem; padding: .85rem 1.6rem; }
+.btn.ghost { background: transparent; }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: 1.25rem 1.35rem; display: grid; gap: .85rem; align-content: start; }
+
+/* ---------- Chooser ---------- */
+.chooser { min-height: 100%; display: grid; place-content: center; gap: 1.5rem; padding: 2rem 1rem; text-align: center; }
+.chooser .logo { font-family: var(--display); font-size: clamp(2.4rem, 8vw, 4.5rem); line-height: .95; color: var(--gold); }
+.chooser .logo span { color: var(--ink); display: block; }
+.chooser .opts { display: grid; gap: .75rem; max-width: 420px; width: 100%; margin: 0 auto; }
+
+/* ---------- Host: setup ---------- */
+.setup { max-width: 1180px; margin: 0 auto; padding: 2rem 1.25rem 3rem; display: grid; gap: 1.25rem; grid-template-columns: 1.05fr 1fr; align-items: start; }
+.setup .col { display: grid; gap: 1.25rem; }
+.brand h1 { font-family: var(--display); font-size: clamp(2.6rem, 6vw, 4.6rem); line-height: .92; color: var(--gold); }
+.brand h1 span { color: var(--ink); }
+.brand .lede { margin-top: .9rem; color: var(--muted); max-width: 46ch; font-size: 1.05rem; }
+.conn { margin-top: .8rem; display: inline-flex; align-items: center; gap: .5rem; font-size: .92rem; color: var(--muted); }
+.conn::before { content: ""; width: .6rem; height: .6rem; border-radius: 50%; background: var(--muted); }
+.conn.ok::before { background: var(--sage); box-shadow: 0 0 0 4px rgba(140,192,132,.18); }
+.conn.bad::before { background: var(--cran); }
+.join ol { margin: 0; padding-left: 1.3rem; display: grid; gap: .3rem; }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+.chip { display: inline-flex; align-items: center; gap: .45rem; padding: .4rem .5rem .4rem .8rem; border-radius: 999px; background: #3a1f34; border: 1px solid var(--line); font-weight: 500; max-width: 100%; }
+.chip .dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--line); flex: none; }
+.chip .dot.on { background: var(--sage); }
+.chip .x { border: 0; background: transparent; color: var(--muted); cursor: pointer; width: 1.6rem; height: 1.6rem; border-radius: 50%; font-size: 1.1rem; line-height: 1; }
+.chip .x:hover { background: var(--line); color: var(--ink); }
+.chip .nm { overflow-wrap: anywhere; }
+.empty { color: var(--muted); font-style: italic; }
+.inline-form { display: flex; gap: .5rem; }
+.inline-form input { flex: 1; min-width: 0; }
+input[type=text], select, textarea {
+  background: #1f1019; border: 1.5px solid var(--line); border-radius: 14px; padding: .65rem .85rem; width: 100%;
+}
+input[type=text]:focus, select:focus, textarea:focus { border-color: var(--gold); outline: none; }
+textarea { min-height: 300px; resize: vertical; line-height: 1.55; font-size: .97rem; }
+.opts-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+.opts-row label { display: inline-flex; gap: .5rem; align-items: center; }
+.opts-row select { width: auto; }
+.awards .head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.awards .count { color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+
+/* ---------- Host: stage ---------- */
+.stage { min-height: 100%; display: grid; grid-template-rows: auto 1fr auto; padding: 1.25rem clamp(1rem, 4vw, 3rem) 2rem; gap: 1rem; position: relative; overflow: hidden; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.topbar .round { font-family: var(--display); color: var(--gold); font-size: 1.15rem; }
+.topbar .conn { margin-top: 0; }
+.topbar .right { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.center { display: grid; align-content: center; justify-items: center; gap: 1.6rem; text-align: center; }
+.prompt { font-family: var(--display); font-size: clamp(2rem, 5.4vw, 4.4rem); line-height: 1.04; max-width: 20ch; }
+.prompt.small { font-size: clamp(1.2rem, 2.6vw, 1.9rem); color: var(--muted); max-width: 34ch; }
+.tally { display: flex; align-items: baseline; gap: .5rem; font-size: 1.3rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tally .big-num { font-family: var(--display); font-size: 3.4rem; color: var(--ink); line-height: 1; }
+.voters { justify-content: center; max-width: 900px; }
+.voters .chip { padding: .4rem .9rem; opacity: .45; }
+.voters .chip.voted { opacity: 1; border-color: var(--sage); background: #2c3626; }
+.voters .chip.voted::after { content: "✓"; color: var(--sage); font-weight: 700; }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; }
+
+/* ---------- Reveal ---------- */
+.reveal-wrap { display: grid; justify-items: center; gap: 1.2rem; text-align: center; position: relative; }
+.drum { display: none; }
+.animate .drum { display: block; position: absolute; inset: 0; pointer-events: none; }
+.animate .drum span {
+  position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-size: clamp(6rem, 18vw, 11rem);
+  line-height: 1; color: var(--gold); opacity: 0; animation: tick 1s ease-out both;
+}
+.animate .drum span:nth-child(2) { animation-delay: 1s; }
+.animate .drum span:nth-child(3) { animation-delay: 2s; }
+@keyframes tick { 0% { opacity: 0; transform: scale(.4); } 25% { opacity: 1; transform: scale(1.08); } 80% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.4); } }
+.animate .after { animation: rise .6s cubic-bezier(.2,.9,.3,1.3) 3s both; }
+.animate .after.late { animation-delay: 3.5s; }
+.animate .reveal-wrap { min-height: clamp(8rem, 22vw, 13rem); }
+.animate .reveal-wrap > .prompt, .animate .reveal-wrap > .p-prompt { animation: dim 3s ease both; }
+@keyframes dim { 0%, 90% { opacity: .25; } 100% { opacity: 1; } }
+@keyframes rise { from { opacity: 0; transform: translateY(18px) scale(.94); } to { opacity: 1; transform: none; } }
+.winner-label { font-size: .95rem; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 600; }
+.winner { font-family: var(--display); font-size: clamp(3rem, 10vw, 7.5rem); line-height: .95; color: var(--gold); text-shadow: 0 6px 40px rgba(242,177,52,.25); overflow-wrap: anywhere; }
+.winner.none { color: var(--muted); font-size: clamp(2rem, 6vw, 3.5rem); }
+.bars { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; width: min(640px, 100%); }
+.bars li { display: grid; grid-template-columns: minmax(6rem, 11rem) 1fr 2.2rem; gap: .75rem; align-items: center; text-align: left; }
+.bars .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bars .track, .bars .fill { display: block; }
+.bars .track { height: .8rem; background: #3a1f34; border-radius: 999px; overflow: hidden; }
+.bars .fill { height: 100%; background: var(--muted); border-radius: 999px; }
+.bars li.top .fill { background: var(--gold); }
+.bars li.top .nm { font-weight: 700; }
+.bars .n { font-variant-numeric: tabular-nums; text-align: right; color: var(--muted); }
+canvas.confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* ---------- Done ---------- */
+.done { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 3rem; display: grid; gap: 1.5rem; }
+.done h1 { font-family: var(--display); font-size: clamp(2.2rem, 6vw, 4rem); line-height: .95; color: var(--gold); }
+.done .mvp { color: var(--muted); font-size: 1.1rem; }
+.done .mvp strong { color: var(--ink); }
+.awards-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; counter-reset: aw; }
+.awards-list li { counter-increment: aw; display: grid; grid-template-columns: 2.2rem 1fr auto; gap: .9rem; align-items: baseline; padding: .85rem 1rem; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+.awards-list li::before { content: counter(aw); font-family: var(--display); color: var(--gold); font-size: 1.2rem; }
+.awards-list .who { font-family: var(--display); color: var(--gold); font-size: 1.15rem; text-align: right; overflow-wrap: anywhere; }
+.awards-list .who.none { color: var(--muted); font-family: var(--body); font-size: .95rem; font-style: italic; }
+
+/* ---------- Overlay (pass-around ballot) ---------- */
+.overlay { position: fixed; inset: 0; background: rgba(15,6,13,.92); display: grid; place-items: center; padding: 1rem; z-index: 10; }
+.ballot { width: min(720px, 100%); max-height: 100%; overflow-y: auto; display: grid; gap: 1rem; text-align: center; }
+.ballot h2 { font-size: 1.6rem; }
+.ballot .q { font-family: var(--display); font-size: clamp(1.3rem, 3vw, 2rem); }
+.pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .6rem; }
+.pick-grid .btn { border-radius: 16px; padding: .9rem .8rem; overflow-wrap: anywhere; }
+.pick-grid .btn.had { border-color: var(--sage); }
+
+/* ---------- Player ---------- */
+.player { max-width: 520px; margin: 0 auto; min-height: 100%; padding: 1rem 1rem 2rem; display: grid; grid-template-rows: auto 1fr; gap: 1rem; }
+.p-head { display: flex; justify-content: space-between; align-items: center; gap: .75rem; }
+.p-head .mark { font-family: var(--display); color: var(--gold); font-size: 1.05rem; line-height: 1; }
+.p-head .me { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: .35rem .8rem; cursor: pointer; font-size: .9rem; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.p-body { display: grid; align-content: start; gap: 1.1rem; }
+.p-body.mid { align-content: center; text-align: center; justify-items: center; }
+.p-title { font-family: var(--display); font-size: 2rem; line-height: 1.02; }
+.p-prompt { font-family: var(--display); font-size: clamp(1.5rem, 7vw, 2.1rem); line-height: 1.08; }
+.p-round { color: var(--gold); font-weight: 600; font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; }
+.nominees { display: grid; gap: .55rem; }
+.nominee {
+  display: flex; justify-content: space-between; align-items: center; gap: .75rem; width: 100%; text-align: left;
+  padding: 1rem 1.1rem; border-radius: 18px; border: 1.5px solid var(--line); background: var(--panel); cursor: pointer; font-size: 1.12rem; font-weight: 600;
+}
+.nominee .tag { color: var(--muted); font-weight: 400; font-size: .85rem; }
+.nominee.sel { background: var(--gold); border-color: var(--gold); color: #2a1408; }
+.nominee.sel .tag { color: #5a3510; }
+.nominee .nm { overflow-wrap: anywhere; }
+.notice { border: 1px solid var(--line); border-left: 4px solid var(--cran); background: var(--panel); border-radius: 12px; padding: .75rem .9rem; font-size: .93rem; }
+.name-form { display: grid; gap: .75rem; width: 100%; }
+.name-form input { font-size: 1.2rem; padding: .85rem 1rem; text-align: center; }
+.here-list { justify-content: center; }
+.p-body .winner { font-size: clamp(2.4rem, 13vw, 4rem); }
+.mine { color: var(--muted); }
+
+@media (max-width: 860px) {
+  .setup { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .animate .drum { display: none; }
+}
+
+/* ---------- Standalone additions ---------- */
+.join-grid { display: grid; grid-template-columns: 170px 1fr; gap: 1.1rem; align-items: center; }
+.qr { background: #fff; border-radius: 16px; padding: 10px; width: 170px; height: 170px; display: grid; place-items: center; }
+.qr svg { width: 100%; height: 100%; display: block; }
+.qr:empty { display: none; }
+.join-steps { display: grid; gap: .25rem; }
+.join-steps .url { font-weight: 600; overflow-wrap: anywhere; }
+.room-code { font-family: var(--display); font-size: 2.6rem; line-height: 1; color: var(--gold); letter-spacing: .08em; }
+.qr-missing { border: 1px dashed var(--line); border-radius: 12px; padding: .75rem; font-size: .9rem; color: var(--muted); }
+.mini-join { display: inline-flex; gap: .4rem; align-items: baseline; color: var(--muted); font-size: .95rem; }
+.mini-join b { font-family: var(--display); font-weight: 400; color: var(--ink); letter-spacing: .06em; font-size: 1.15rem; }
+.join-form { display: grid; grid-template-columns: 1fr auto; gap: .5rem; }
+.join-form input { text-transform: uppercase; letter-spacing: .15em; text-align: center; font-size: 1.2rem; }
+.divider { color: var(--muted); font-size: .9rem; }
+.corner-qr { position: absolute; right: clamp(1rem, 4vw, 3rem); bottom: 1.5rem; display: grid; justify-items: center; gap: .35rem; }
+.corner-qr .qr { width: 104px; height: 104px; padding: 6px; border-radius: 12px; }
+@media (max-width: 860px) { .corner-qr { display: none; } }
+@media (max-width: 420px) { .join-grid { grid-template-columns: 1fr; } }
+.join-grid.noqr { grid-template-columns: 1fr; }
+
+/* ================= Retro night-drive theme ================= */
+:root {
+  --bg: #140a22; --panel: #21123a; --line: #41286a; --ink: #f4e4c1; --muted: #b7a3d6;
+  --gold: #ffd23f; --orange: #ff8c42; --purple: #a066ff; --cran: #ff8c42; --sage: #ffd23f;
+}
+body { background: linear-gradient(180deg, #0d0618 0%, #1b0b31 42%, #34124a 70%, #140a22 100%) fixed; }
+body::before {
+  content: ""; position: fixed; left: 50%; bottom: 24vh; width: min(68vmin, 600px); aspect-ratio: 1; transform: translateX(-50%);
+  border-radius: 50%; background: linear-gradient(180deg, #ffd23f 0%, #ff8c42 52%, #a066ff 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0 46%, transparent 46%), repeating-linear-gradient(180deg, #000 0 13px, transparent 13px 21px);
+  mask-image: linear-gradient(180deg, #000 0 46%, transparent 46%), repeating-linear-gradient(180deg, #000 0 13px, transparent 13px 21px);
+  opacity: .22; z-index: -2; pointer-events: none;
+}
+body::after {
+  content: ""; position: fixed; left: -50%; right: -50%; bottom: 0; height: 40vh; z-index: -1; pointer-events: none;
+  background-image: linear-gradient(rgba(160,102,255,.7) 2px, transparent 2px), linear-gradient(90deg, rgba(160,102,255,.7) 2px, transparent 2px);
+  background-size: 64px 64px; transform: perspective(320px) rotateX(62deg); transform-origin: bottom center;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 75%); mask-image: linear-gradient(180deg, transparent 0%, #000 75%);
+  opacity: .32; animation: drive 1.4s linear infinite;
+}
+@keyframes drive { to { background-position: 0 64px; } }
+#app { position: relative; z-index: 1; min-height: 100%; }
+h2 { color: var(--orange); text-transform: uppercase; letter-spacing: .07em; }
+.brand h1, .chooser .logo, .done h1 { color: var(--gold); text-shadow: 3px 3px 0 var(--purple), 6px 6px 0 rgba(255,140,66,.9); }
+.brand h1 span, .chooser .logo span { color: var(--ink); }
+.prompt { color: var(--ink); text-shadow: 3px 3px 0 var(--purple); }
+.prompt.small { text-shadow: none; }
+.p-title, .p-prompt { text-shadow: 2px 2px 0 var(--purple); }
+.winner { color: var(--gold); text-shadow: 4px 4px 0 var(--purple), 8px 8px 0 var(--orange); }
+.room-code { text-shadow: 3px 3px 0 var(--purple); }
+.animate .drum span { color: var(--orange); text-shadow: 6px 6px 0 var(--purple); }
+.card { background: rgba(33,18,58,.9); border: 2px solid var(--line); box-shadow: 6px 6px 0 rgba(160,102,255,.25); }
+.btn { border: 2px solid var(--line); border-radius: 14px; box-shadow: 4px 4px 0 rgba(0,0,0,.5); }
+.btn:hover { border-color: var(--purple); transform: translate(-1px, -1px); box-shadow: 5px 5px 0 rgba(0,0,0,.5); }
+.btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 rgba(0,0,0,.5); }
+.btn.primary { background: var(--gold); color: #1a0b2c; border-color: #1a0b2c; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; box-shadow: 4px 4px 0 var(--orange), 8px 8px 0 var(--purple); }
+.btn.primary:hover { background: #ffe066; box-shadow: 5px 5px 0 var(--orange), 9px 9px 0 var(--purple); }
+.btn.primary:active { box-shadow: 1px 1px 0 var(--orange), 2px 2px 0 var(--purple); }
+.btn.ghost, .btn.ghost:hover, .btn.ghost:active { background: transparent; box-shadow: none; transform: none; }
+.btn:disabled, .btn:disabled:hover { box-shadow: none; transform: none; }
+.chip { background: #2b1749; border: 2px solid var(--line); }
+.chip .dot.on { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.voters .chip.voted { border-color: var(--gold); background: #3b2913; }
+.voters .chip.voted::after { color: var(--gold); }
+input[type=text], select, textarea { background: #170b28; border: 2px solid var(--line); }
+.conn.ok::before { background: var(--gold); box-shadow: 0 0 0 4px rgba(255,210,63,.18), 0 0 10px var(--gold); }
+.conn.bad::before { background: var(--orange); }
+.nominee { border: 2px solid var(--line); box-shadow: 4px 4px 0 rgba(0,0,0,.45); transition: transform .08s ease; }
+.nominee:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(0,0,0,.45); }
+.nominee.sel { background: var(--gold); color: #1a0b2c; border-color: #1a0b2c; box-shadow: 4px 4px 0 var(--orange), 7px 7px 0 var(--purple); }
+.nominee.sel .tag { color: #5b3a00; }
+.bars .track { background: #2b1749; }
+.bars .fill { background: var(--purple); }
+.bars li.top .fill { background: linear-gradient(90deg, var(--orange), var(--gold)); }
+.overlay { background: rgba(13,6,24,.95); }
+.awards-list li { border: 2px solid var(--line); box-shadow: 4px 4px 0 rgba(0,0,0,.35); background: rgba(33,18,58,.92); }
+.awards-list li::before { color: var(--orange); }
+.p-round { color: var(--orange); }
+.qr { box-shadow: 5px 5px 0 var(--purple); }
+.p-head .me { border: 2px solid var(--line); }
+
+/* ---------- Question intro ---------- */
+.q-eyebrow {
+  display: inline-block; justify-self: center; font-family: var(--display); text-transform: uppercase; letter-spacing: .12em;
+  font-size: clamp(1rem, 2.2vw, 1.4rem); color: #1a0b2c; background: var(--orange); padding: .35rem .95rem .3rem;
+  border-radius: 10px; transform: rotate(-3deg); box-shadow: 4px 4px 0 var(--purple);
+}
+.p-body .q-eyebrow { justify-self: start; font-size: 1rem; }
+.p-body.mid .q-eyebrow { justify-self: center; }
+.intro .q-eyebrow, .animate-board .q-eyebrow { animation: slam .55s cubic-bezier(.2,1.5,.4,1) both; }
+@keyframes slam { from { opacity: 0; transform: scale(2.6) rotate(-14deg); } to { opacity: 1; transform: scale(1) rotate(-3deg); } }
+.intro .w { display: inline-block; animation: wordIn .5s cubic-bezier(.2,1.3,.4,1) both; }
+@keyframes wordIn { from { opacity: 0; transform: translateY(.6em) scale(.7) rotate(-6deg); } to { opacity: 1; transform: none; } }
+.intro .after-q { animation: rise .5s ease both; animation-delay: var(--qd, 1.4s); }
+
+/* ---------- Leaderboard ---------- */
+.board { gap: 1rem; }
+.lb { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; width: min(860px, 100%); text-align: left; }
+.lb li {
+  display: grid; grid-template-columns: 2.4rem minmax(7rem, 15rem) 1fr auto 2.6rem; gap: .9rem; align-items: center;
+  padding: .55rem .9rem; background: rgba(33,18,58,.92); border: 2px solid var(--line); border-radius: 14px; box-shadow: 4px 4px 0 rgba(0,0,0,.35);
+}
+.animate-board .lb li { animation: rise .45s ease both; animation-delay: calc(var(--i) * 90ms + .4s); }
+.lb .rk { display: grid; place-items: center; width: 2.3rem; height: 2.3rem; border-radius: 9px; background: var(--line); color: var(--ink); font-family: var(--display); font-size: 1.15rem; }
+.lb li.r1 .rk { background: var(--gold); color: #1a0b2c; }
+.lb li.r2 .rk { background: var(--ink); color: #1a0b2c; }
+.lb li.r3 .rk { background: var(--orange); color: #1a0b2c; }
+.lb li.r1 { border-color: var(--gold); box-shadow: 4px 4px 0 var(--orange), 0 0 24px rgba(255,210,63,.18); }
+.lb li.me { border-color: var(--gold); }
+.lb .nm { font-weight: 700; font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb .nm em { font-style: normal; font-weight: 400; color: var(--muted); font-size: .85em; }
+.lb .aw { color: var(--gold); letter-spacing: .08em; margin-left: .35rem; font-size: .85em; }
+.lb .track { display: block; height: .9rem; background: #2b1749; border-radius: 6px; overflow: hidden; }
+.lb .fill { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--purple), var(--orange)); transition: width 1.1s cubic-bezier(.2,.8,.2,1) .9s; }
+.lb li.r1 .fill { background: linear-gradient(90deg, var(--orange), var(--gold)); }
+.lb .meta { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+.lb .meta b { color: var(--ink); font-family: var(--display); font-weight: 400; font-size: 1.2rem; }
+.lb .mv { font-size: .85rem; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.lb .mv.up { color: var(--gold); }
+.lb .mv.down { color: var(--orange); }
+.p-body .lb li { grid-template-columns: 2.2rem 1fr auto 2.2rem; gap: .6rem; }
+.p-body .lb .track { display: none; }
+.done .lb { width: 100%; }
+.done .champ { display: grid; gap: .6rem; justify-items: start; }
+@media (max-width: 640px) {
+  .lb li { grid-template-columns: 2.2rem 1fr auto 2.2rem; gap: .6rem; }
+  .lb .track { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::after { animation: none; }
+  .lb .fill { transition: none; }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<!-- PeerJS (MIT, github.com/peers/peerjs): lets the phones talk straight to the host screen -->
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<!-- qrcode-generator (MIT, github.com/kazuhikoarase/qrcode-generator): draws the join QR code -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(() => {
+"use strict";
+
+const DEFAULT_PROMPTS = [
+  "Most likely to fall asleep on the couch by 8pm",
+  "Most likely to bring store-bought and call it homemade",
+  "Most likely to start a debate at the table",
+  "Most likely to go back for thirds",
+  "Most likely to show up late with a bag of ice",
+  "Most likely to hide the good leftovers",
+  "Most likely to cry during the gratitude toast",
+  "Most likely to take 40 photos of the food before anyone eats",
+  "Most likely to leave with three containers of leftovers",
+  "Most likely to host next year",
+  "Hottest take about cranberry sauce",
+  "Most likely to offer to help, then disappear",
+  "Most likely to bring a board game nobody knows how to play",
+  "Most likely to be found hanging out with the pets",
+  "Best dressed at the table",
+  "Most likely to burn the rolls",
+  "Most likely to survive a week on leftovers alone",
+  "Most likely to start the group chat about tonight",
+  "Most likely to win a pie-eating contest",
+  "Most likely to still be here at midnight"
+];
+
+const app = document.getElementById("app");
+const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const YEAR = new Date().getFullYear();
+
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const rid = () => Math.random().toString(36).slice(2, 10);
+const LS = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+const cleanName = s => typeof s === "string" ? s.replace(/[\u0000-\u001f\u007f​-‏‪-‮⁠-⁯]/g, "").replace(/\s+/g, " ").trim().slice(0, 24) : "";
+const cleanText = (s, n) => typeof s === "string" ? s.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, n) : "";
+const cleanCode = s => String(s || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 6);
+const newCode = () => { const A = "ABCDEFGHJKMNPQRSTUVWXYZ"; let s = ""; for (let i = 0; i < 4; i++) s += A[(Math.random() * A.length) | 0]; return s; };
+const peerIdFor = code => "fsg-superlatives-" + code.toLowerCase();
+
+let pid = LS.get("fsg.pid");
+if (!pid || !/^[a-z0-9]{6,40}$/.test(pid)) { pid = rid() + rid(); LS.set("fsg.pid", pid); }
+let roomCode = cleanCode(new URLSearchParams(location.search).get("room"));
+
+/* ---------------- State ---------------- */
+function blankState() {
+  return { gameId: rid(), phase: "setup", idx: 0, prompts: [], roster: [], hidden: [], results: [], ts: 0 };
+}
+let S = blankState();
+let stateSeen = false;
+let mode = null;                 // "host" | "player" | null (landing)
+let net = "idle";                // idle | connecting | ok | lost | nohost | bad | nolib
+let firstBuild = true;
+
+// host-local
+const votes = new Map();         // voter key -> nominee key
+const conns = new Map();         // peer connection id -> {conn, key}
+const online = new Set();
+let ballot = null;
+let promptText = LS.get("fsg.prompts") || DEFAULT_PROMPTS.join("\n");
+let rounds = LS.get("fsg.rounds") || "10";
+let shuffle = LS.get("fsg.shuffle") !== "0";
+
+// player-local
+let myName = cleanName(LS.get("fsg.name") || "");
+let myVote = null;
+try { myVote = JSON.parse(LS.get("fsg.vote") || "null"); } catch (e) { myVote = null; }
+let renaming = false;
+const myKey = "u:" + pid;
+
+function sanitizeState(d) {
+  if (!d || typeof d !== "object") return null;
+  if (!["setup", "vote", "reveal", "board", "done"].includes(d.phase)) return null;
+  const roster = Array.isArray(d.roster) ? d.roster.filter(r => r && typeof r.key === "string" && typeof r.name === "string").slice(0, 60).map(r => ({ key: r.key.slice(0, 60), name: cleanName(r.name) || "Someone" })) : [];
+  const prompts = Array.isArray(d.prompts) ? d.prompts.filter(p => typeof p === "string").slice(0, 80).map(p => cleanText(p, 140)) : [];
+  const results = Array.isArray(d.results) ? d.results.slice(0, 80).map(r => {
+    if (!r || typeof r !== "object") return null;
+    return {
+      prompt: cleanText(r.prompt, 140),
+      counts: r.counts && typeof r.counts === "object" ? r.counts : {},
+      names: r.names && typeof r.names === "object" ? r.names : {},
+      winners: Array.isArray(r.winners) ? r.winners.filter(w => w && typeof w.name === "string").map(w => ({ key: String(w.key || ""), name: cleanName(w.name) })) : [],
+      total: typeof r.total === "number" ? r.total : 0
+    };
+  }) : [];
+  return {
+    gameId: typeof d.gameId === "string" ? d.gameId.slice(0, 40) : rid(),
+    phase: d.phase,
+    idx: Number.isInteger(d.idx) && d.idx >= 0 ? d.idx : 0,
+    prompts, roster, results,
+    hidden: Array.isArray(d.hidden) ? d.hidden.filter(h => typeof h === "string").slice(0, 100) : [],
+    ts: typeof d.ts === "number" ? d.ts : 0
+  };
+}
+
+/* ================= Networking (PeerJS) ================= */
+let peer = null;
+let hostConn = null;
+let retryTimer = null;
+let idRetries = 0;
+
+function libReady() { return typeof window.Peer === "function"; }
+
+/* ---- host ---- */
+function openHost() {
+  if (!libReady()) { net = "nolib"; render(); return; }
+  net = "connecting"; renderDynamic();
+  try { if (peer) peer.destroy(); } catch (e) {}
+  peer = new window.Peer(peerIdFor(roomCode), { debug: 0 });
+  peer.on("open", () => { net = "ok"; idRetries = 0; renderDynamic(); });
+  peer.on("connection", conn => {
+    conn.on("data", d => onHostData(conn, d));
+    conn.on("close", () => dropConn(conn));
+    conn.on("error", () => dropConn(conn));
+  });
+  peer.on("disconnected", () => {
+    net = "bad"; renderDynamic();
+    setTimeout(() => { try { if (peer && !peer.destroyed) peer.reconnect(); } catch (e) {} }, 1500);
+  });
+  peer.on("error", err => {
+    const type = err && err.type;
+    if (type === "unavailable-id") {
+      // Usually the old tab's room is still registered for a few seconds after a reload.
+      idRetries += 1;
+      if (idRetries > 6) { roomCode = newCode(); LS.set("fsg.room", roomCode); idRetries = 0; lastKey = null; render(); }
+      net = "connecting"; renderDynamic();
+      clearTimeout(retryTimer); retryTimer = setTimeout(openHost, 2500);
+    } else if (["network", "server-error", "socket-error", "socket-closed", "browser-incompatible"].includes(type)) {
+      net = "bad"; renderDynamic();
+      clearTimeout(retryTimer); retryTimer = setTimeout(openHost, 4000);
+    }
+  });
+}
+
+function onHostData(conn, d) {
+  if (!d || typeof d !== "object") return;
+  if (d.t === "hello") {
+    const p = typeof d.pid === "string" && /^[a-z0-9]{6,40}$/.test(d.pid) ? d.pid : null;
+    const name = cleanName(d.name);
+    if (!p || !name) return;
+    const key = "u:" + p;
+    conns.set(conn.peer + ":" + conn.connectionId, { conn, key });
+    let changed = false;
+    if (!S.hidden.includes(key)) {
+      const r = S.roster.find(x => x.key === key);
+      if (!r) { if (S.roster.length < 60) { S.roster.push({ key, name }); changed = true; } }
+      else if (r.name !== name) { r.name = name; changed = true; }
+    }
+    recomputeOnline();
+    sendState(conn);
+    if (changed) scheduleCommit(); else renderDynamic();
+  } else if (d.t === "vote") {
+    const entry = conns.get(conn.peer + ":" + conn.connectionId);
+    if (!entry || S.hidden.includes(entry.key)) return;
+    if (S.phase === "vote" && d.g === S.gameId && d.r === S.idx && typeof d.pick === "string" && S.roster.some(x => x.key === d.pick)) {
+      votes.set(entry.key, d.pick);
+      saveHost();
+      renderDynamic();
+    }
+  }
+}
+function dropConn(conn) {
+  conns.delete(conn.peer + ":" + conn.connectionId);
+  recomputeOnline();
+  renderDynamic();
+}
+function recomputeOnline() {
+  online.clear();
+  for (const { conn, key } of conns.values()) if (conn.open !== false) online.add(key);
+}
+function sendState(conn) {
+  try { if (conn.open) conn.send({ t: "state", s: S }); } catch (e) {}
+}
+function broadcast() {
+  for (const { conn } of conns.values()) sendState(conn);
+}
+
+/* ---- player ---- */
+function playerConnect() {
+  clearTimeout(retryTimer);
+  if (!libReady()) { net = "nolib"; render(); return; }
+  if (hostConn && hostConn.open) return;
+  if (!peer || peer.destroyed) {
+    net = "connecting"; renderDynamic();
+    peer = new window.Peer({ debug: 0 });
+    peer.on("open", () => connectToHost());
+    peer.on("disconnected", () => { setTimeout(() => { try { if (peer && !peer.destroyed) peer.reconnect(); } catch (e) {} }, 1500); });
+    peer.on("error", err => {
+      const type = err && err.type;
+      if (type === "peer-unavailable") { net = "nohost"; }
+      else { net = net === "ok" ? "lost" : "bad"; }
+      renderDynamic();
+      if (type !== "peer-unavailable" && ["network", "server-error", "socket-error", "socket-closed"].includes(type)) {
+        try { peer.destroy(); } catch (e) {} peer = null;
+      }
+      scheduleRetry();
+    });
+  } else if (peer.open) {
+    connectToHost();
+  } else if (peer.disconnected) {
+    try { peer.reconnect(); } catch (e) {}
+    scheduleRetry();
+  }
+}
+function connectToHost() {
+  if (!roomCode) return;
+  if (hostConn && hostConn.open) return;
+  try { if (hostConn) hostConn.close(); } catch (e) {}
+  const c = peer.connect(peerIdFor(roomCode), { reliable: true });
+  hostConn = c;
+  let opened = false;
+  const giveUp = setTimeout(() => { if (!opened && hostConn === c) { try { c.close(); } catch (e) {} hostConn = null; if (net !== "nohost") net = "bad"; renderDynamic(); scheduleRetry(); } }, 9000);
+  c.on("open", () => {
+    opened = true; clearTimeout(giveUp);
+    net = "ok";
+    sendHello();
+    const v = currentVote(); if (v) sendVote(v);
+    renderDynamic();
+  });
+  c.on("data", d => { if (d && d.t === "state") applyState(d.s); });
+  c.on("close", () => { clearTimeout(giveUp); if (hostConn === c) { hostConn = null; net = "lost"; renderDynamic(); scheduleRetry(); } });
+  c.on("error", () => { clearTimeout(giveUp); if (hostConn === c) { hostConn = null; net = "lost"; renderDynamic(); scheduleRetry(); } });
+}
+function scheduleRetry() {
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(playerConnect, 3000);
+}
+function sendHello() {
+  if (hostConn && hostConn.open && myName) try { hostConn.send({ t: "hello", pid, name: myName }); } catch (e) {}
+}
+function sendVote(v) {
+  if (hostConn && hostConn.open) try { hostConn.send({ t: "vote", g: v.g, r: v.r, pick: v.pick }); } catch (e) {}
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && mode === "player" && !(hostConn && hostConn.open)) playerConnect();
+});
+
+function applyState(d) {
+  const s = sanitizeState(d);
+  if (!s) return;
+  S = s;
+  stateSeen = true;
+  render();
+}
+
+/* ================= Host: game actions ================= */
+let commitTimer = null;
+function saveHost() { LS.set("fsg.host", JSON.stringify({ S, votes: [...votes] })); }
+function restoreHost() {
+  try {
+    const d = JSON.parse(LS.get("fsg.host") || "null");
+    if (!d) return;
+    const s = sanitizeState(d.S);
+    if (s) S = s;
+    if (Array.isArray(d.votes)) d.votes.forEach(p => { if (Array.isArray(p) && typeof p[0] === "string" && typeof p[1] === "string") votes.set(p[0], p[1]); });
+  } catch (e) {}
+}
+function commit() {
+  clearTimeout(commitTimer);
+  S.ts = Math.max(Date.now(), S.ts + 1);
+  saveHost();
+  render();
+  broadcast();
+}
+function scheduleCommit() {
+  clearTimeout(commitTimer);
+  commitTimer = setTimeout(commit, 300);
+  renderDynamic();
+}
+function parsePrompts() { return promptText.split("\n").map(l => cleanText(l, 140)).filter(Boolean).slice(0, 80); }
+function shuffled(a) {
+  const b = a.slice();
+  for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
+  return b;
+}
+function startGame() {
+  let list = parsePrompts();
+  if (!list.length || S.roster.length < 2) return;
+  if (shuffle) list = shuffled(list);
+  if (rounds !== "all") list = list.slice(0, parseInt(rounds, 10) || 10);
+  S.gameId = rid(); S.prompts = list; S.idx = 0; S.phase = "vote"; S.results = [];
+  votes.clear(); ballot = null;
+  commit();
+}
+function doReveal() {
+  const counts = {};
+  for (const pick of votes.values()) if (S.roster.some(r => r.key === pick)) counts[pick] = (counts[pick] || 0) + 1;
+  const max = Math.max(0, ...Object.values(counts));
+  const winners = max > 0 ? S.roster.filter(r => counts[r.key] === max).map(r => ({ key: r.key, name: r.name })) : [];
+  const names = {};
+  S.roster.forEach(r => { if (counts[r.key]) names[r.key] = r.name; });
+  S.results[S.idx] = { prompt: S.prompts[S.idx], counts, names, winners, total: votes.size };
+  S.phase = "reveal"; ballot = null;
+  commit();
+}
+function nextAward() {
+  votes.clear(); ballot = null;
+  S.idx += 1;
+  if (S.idx >= S.prompts.length) { S.phase = "done"; S.idx = S.prompts.length; } else S.phase = "vote";
+  commit();
+}
+function goBoard() { ballot = null; S.phase = "board"; commit(); }
+function skipAward() { S.results[S.idx] = null; nextAward(); }
+function endEarly() {
+  votes.clear(); ballot = null;
+  S.prompts = S.prompts.slice(0, S.phase === "reveal" || S.phase === "board" ? S.idx + 1 : S.idx);
+  S.results = S.results.slice(0, S.prompts.length);
+  S.phase = "done"; S.idx = S.prompts.length;
+  commit();
+}
+function backToSetup() {
+  votes.clear(); ballot = null;
+  S.gameId = rid(); S.phase = "setup"; S.idx = 0; S.prompts = []; S.results = [];
+  commit();
+}
+function addPerson(name) {
+  name = cleanName(name);
+  if (!name || S.roster.length >= 60) return;
+  S.roster.push({ key: "x:" + rid(), name });
+  commit();
+}
+function removePerson(key) {
+  S.roster = S.roster.filter(r => r.key !== key);
+  if (!key.startsWith("x:") && !S.hidden.includes(key)) S.hidden.push(key);
+  for (const [v, p] of [...votes]) if (v === key || p === key) votes.delete(v);
+  commit();
+}
+
+/* ================= Player actions ================= */
+function currentVote() { return myVote && myVote.g === S.gameId && myVote.r === S.idx ? myVote : null; }
+function castVote(pick) {
+  myVote = { g: S.gameId, r: S.idx, pick };
+  LS.set("fsg.vote", JSON.stringify(myVote));
+  sendVote(myVote);
+  renderDynamic();
+}
+
+/* ================= Rendering ================= */
+let lastKey = null;
+function viewKey() {
+  if (!mode) return "landing";
+  if (mode === "host") return ["h", S.phase, S.gameId, S.idx, roomCode].join(":");
+  if (!myName || renaming) return "p:name";
+  if (!stateSeen) return "p:wait";
+  return ["p", S.phase, S.gameId, S.idx].join(":");
+}
+function render() {
+  const k = viewKey();
+  if (k !== lastKey) { lastKey = k; build(); firstBuild = false; }
+  renderDynamic();
+}
+
+function joinURL() { return location.origin + location.pathname + "?room=" + roomCode; }
+function shortURL() { return (location.host + location.pathname).replace(/\/index\.html$/, "/").replace(/\/$/, ""); }
+function qrSVG() {
+  if (location.protocol === "file:") return "";
+  if (typeof window.qrcode !== "function") return "";
+  try { const q = window.qrcode(0, "M"); q.addData(joinURL()); q.make(); return q.createSvgTag({ cellSize: 8, margin: 2, scalable: true }); }
+  catch (e) { return ""; }
+}
+
+function connHTML() {
+  if (net === "nolib") return `<span class="conn bad">Couldn't load the connection library. Check the internet, then reload.</span>`;
+  if (net === "connecting" || net === "idle") return `<span class="conn">Opening room ${esc(roomCode)}…</span>`;
+  if (net === "bad") return `<span class="conn bad">Connection trouble. Retrying…</span>`;
+  const n = online.size;
+  return `<span class="conn ok">Room ${esc(roomCode)} is open · ${n} phone${n === 1 ? "" : "s"} connected</span>`;
+}
+
+function build() {
+  if (!mode) return buildLanding();
+  if (mode === "host") {
+    if (S.phase === "setup") return buildSetup();
+    if (S.phase === "vote") return buildVote();
+    if (S.phase === "reveal") return buildReveal(app, true);
+    if (S.phase === "board") return buildBoard(app, true);
+    return buildDone(app, true);
+  }
+  return buildPlayer();
+}
+
+function buildLanding() {
+  app.innerHTML = `
+    <main class="chooser">
+      <h1 class="logo">Friendsgiving<span>Superlatives</span></h1>
+      <div class="opts">
+        <button class="btn primary big" data-act="go-host">Host on this screen</button>
+        <p class="fine">Put the host screen on the TV or a laptop everyone can see.</p>
+        <p class="divider">or</p>
+        <form id="joinForm" class="join-form" autocomplete="off">
+          <label for="codeInput" style="position:absolute;left:-9999px">Room code</label>
+          <input id="codeInput" type="text" maxlength="6" placeholder="Room code" value="${esc(roomCode)}" inputmode="text" autocapitalize="characters">
+          <button class="btn big" type="submit">Join</button>
+        </form>
+      </div>
+    </main>`;
+  document.getElementById("joinForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const c = cleanCode(document.getElementById("codeInput").value);
+    if (c.length < 4) return;
+    roomCode = c;
+    try { history.replaceState(null, "", "?room=" + c); } catch (err) {}
+    startPlayer();
+  });
+}
+
+function joinCardHTML() {
+  const svg = qrSVG();
+  const fileNote = location.protocol === "file:" ? `<p class="qr-missing">Phones can't open a file from this computer. Put this page online first (the README shows how), then open it from there.</p>` : "";
+  return `
+    <section class="card join">
+      <h2>Join on your phone</h2>
+      ${fileNote}
+      <div class="join-grid ${svg ? "" : "noqr"}">
+        ${svg ? `<div class="qr" aria-label="QR code that opens the join page">${svg}</div>` : ""}
+        <div class="join-steps">
+          <p>Scan the code with your camera${location.protocol === "file:" ? "" : `, or go to <span class="url">${esc(shortURL())}</span>`} and enter</p>
+          <p class="room-code">${esc(roomCode)}</p>
+        </div>
+      </div>
+      <p class="fine">Works best when everyone is on the same Wi‑Fi. No phone? Add them below and they can vote on this screen.</p>
+    </section>`;
+}
+
+function buildSetup() {
+  app.innerHTML = `
+    <main class="setup">
+      <div class="col">
+        <header class="brand">
+          <h1>Friendsgiving<br><span>Superlatives</span></h1>
+          <p class="lede">Everyone votes from their phone. One award at a time, revealed on this screen. The winners get bragging rights and first dibs on pie.</p>
+          <div id="conn">${connHTML()}</div>
+        </header>
+        ${joinCardHTML()}
+        <section class="card">
+          <h2>At the table <span id="rcount" class="fine"></span></h2>
+          <ul id="roster" class="chips"></ul>
+          <form id="addForm" class="inline-form" autocomplete="off">
+            <label for="addName" style="position:absolute;left:-9999px">Add a name</label>
+            <input id="addName" type="text" maxlength="24" placeholder="Add someone without a phone">
+            <button class="btn" type="submit">Add</button>
+          </form>
+        </section>
+      </div>
+      <section class="card awards">
+        <div class="head"><h2>Awards</h2><span id="pcount" class="count"></span></div>
+        <label for="prompts" class="fine">One award per line. Edit, delete, or add your own inside jokes.</label>
+        <textarea id="prompts" spellcheck="true"></textarea>
+        <div class="opts-row">
+          <label for="rounds">Awards to play
+            <select id="rounds">
+              ${["5", "8", "10", "12", "15", "all"].map(v => `<option value="${v}" ${v === rounds ? "selected" : ""}>${v === "all" ? "All" : v}</option>`).join("")}
+            </select>
+          </label>
+          <label for="shuffle"><input id="shuffle" type="checkbox" ${shuffle ? "checked" : ""}> Shuffle order</label>
+          <button class="btn ghost" type="button" data-act="reset-prompts">Restore default list</button>
+        </div>
+        <button id="start" class="btn primary big" data-act="start">Start the awards</button>
+        <p id="startHint" class="fine"></p>
+      </section>
+    </main>`;
+  const ta = document.getElementById("prompts");
+  ta.value = promptText;
+  ta.addEventListener("input", () => { promptText = ta.value; LS.set("fsg.prompts", promptText); renderDynamic(); });
+  document.getElementById("rounds").addEventListener("change", e => { rounds = e.target.value; LS.set("fsg.rounds", rounds); });
+  document.getElementById("shuffle").addEventListener("change", e => { shuffle = e.target.checked; LS.set("fsg.shuffle", shuffle ? "1" : "0"); });
+  document.getElementById("addForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const inp = document.getElementById("addName");
+    addPerson(inp.value); inp.value = ""; inp.focus();
+  });
+}
+
+function topbarHTML() {
+  return `
+    <div class="topbar">
+      <span class="round">Award ${S.idx + 1} of ${S.prompts.length}</span>
+      <div class="right"><span class="mini-join">Room <b>${esc(roomCode)}</b></span><span id="conn">${connHTML()}</span><button class="btn ghost" data-act="end">End game</button></div>
+    </div>`;
+}
+function cornerQR() {
+  const svg = qrSVG();
+  return svg ? `<div class="corner-qr" aria-hidden="true"><div class="qr">${svg}</div><span class="fine">Late? Scan to join</span></div>` : "";
+}
+
+function words(t) {
+  const ws = String(t || "").split(/\s+/).filter(Boolean);
+  return {
+    html: ws.map((w, i) => `<span class="w" style="animation-delay:${(0.5 + i * 0.1).toFixed(2)}s">${esc(w)}</span>`).join(" "),
+    end: 0.5 + ws.length * 0.1 + 0.35
+  };
+}
+
+function buildVote() {
+  const animate = !firstBuild && !reduceMotion;
+  const w = words(S.prompts[S.idx]);
+  app.innerHTML = `
+    <main class="stage ${animate ? "intro" : ""}" style="--qd:${w.end.toFixed(2)}s">
+      ${topbarHTML()}
+      <div class="center">
+        <p class="q-eyebrow">Award #${S.idx + 1}</p>
+        <h1 class="prompt">${w.html}</h1>
+        <div class="tally after-q"><span id="vcount" class="big-num">0</span><span>of <span id="vtotal">0</span> votes in</span></div>
+        <ul id="voters" class="chips voters after-q" aria-label="Who has voted"></ul>
+      </div>
+      <div class="actions after-q">
+        <button class="btn primary big" data-act="reveal">Reveal the winner</button>
+        <button class="btn big" data-act="ballot">Vote on this screen</button>
+        <button class="btn ghost" data-act="skip">Skip this one</button>
+      </div>
+      ${cornerQR()}
+      <div id="overlay"></div>
+    </main>`;
+}
+
+const PTS_WIN = 2;
+function standings(upto) {
+  const m = new Map(S.roster.map(r => [r.key, { key: r.key, name: r.name, votes: 0, wins: 0, pts: 0 }]));
+  S.results.slice(0, upto + 1).forEach(r => {
+    if (!r) return;
+    for (const [k, n] of Object.entries(r.counts || {})) { const e = m.get(k); if (e) e.votes += (+n || 0); }
+    (r.winners || []).forEach(w => { const e = m.get(w.key); if (e) e.wins += 1; });
+  });
+  const arr = [...m.values()];
+  arr.forEach(e => { e.pts = e.votes + PTS_WIN * e.wins; });
+  arr.sort((a, b) => b.pts - a.pts || b.wins - a.wins || a.name.localeCompare(b.name));
+  arr.forEach((e, i) => { e.rank = i && arr[i - 1].pts === e.pts && arr[i - 1].wins === e.wins ? arr[i - 1].rank : i + 1; });
+  return arr;
+}
+function lbHTML(cur, prev, opts) {
+  const prevMap = new Map((prev || []).map(e => [e.key, e]));
+  const max = Math.max(1, ...cur.map(e => e.pts));
+  let rows = cur.slice(0, opts.limit);
+  if (opts.me) { const mine = cur.find(e => e.key === opts.me); if (mine && !rows.includes(mine)) rows = rows.concat(mine); }
+  if (!rows.length) return `<p class="empty">Nobody on the board yet.</p>`;
+  return `<ol class="lb">${rows.map((e, i) => {
+    const p = prevMap.get(e.key);
+    const from = p && opts.animate ? p.pts : e.pts;
+    const mv = prev && p ? p.rank - e.rank : 0;
+    const stars = e.wins ? `<span class="aw" aria-label="${e.wins} award${e.wins === 1 ? "" : "s"}">${"★".repeat(Math.min(e.wins, 5))}${e.wins > 5 ? "+" : ""}</span>` : "";
+    return `<li class="${e.rank <= 3 && e.pts > 0 ? "r" + e.rank : ""} ${e.key === opts.me ? "me" : ""}" style="--i:${i}">
+      <span class="rk">${e.rank}</span>
+      <span class="nm">${esc(e.name)}${e.key === opts.me ? " <em>(you)</em>" : ""}${stars}</span>
+      <span class="track"><span class="fill" data-to="${Math.round(e.pts / max * 100)}" style="width:${Math.round(from / max * 100)}%"></span></span>
+      <span class="meta"><b>${e.pts}</b> pt${e.pts === 1 ? "" : "s"}</span>
+      <span class="mv ${mv > 0 ? "up" : mv < 0 ? "down" : ""}">${mv > 0 ? "▲" + mv : mv < 0 ? "▼" + (-mv) : ""}</span>
+    </li>`;
+  }).join("")}</ol>`;
+}
+function settleBars(root, animate) {
+  const go = () => root.querySelectorAll(".lb .fill[data-to]").forEach(f => { f.style.width = f.dataset.to + "%"; });
+  if (animate) requestAnimationFrame(() => requestAnimationFrame(go)); else go();
+}
+
+function buildBoard(root, isHost) {
+  const animate = !firstBuild && !reduceMotion;
+  const cur = standings(S.idx);
+  const prev = S.idx > 0 ? standings(S.idx - 1) : null;
+  const wt = winnerText(S.results[S.idx]);
+  const last = S.idx >= S.prompts.length - 1;
+  const rule = `1 point for every vote you get, +${PTS_WIN} for every award you win.`;
+  if (isHost) {
+    root.innerHTML = `
+      <main class="stage ${animate ? "animate-board" : ""}">
+        ${topbarHTML()}
+        <div class="center board">
+          <p class="q-eyebrow">Leaderboard</p>
+          <p class="fine">After ${S.idx + 1} of ${S.prompts.length} awards${wt ? ` · ${esc(wt)} just took one home` : ""}</p>
+          ${lbHTML(cur, prev, { limit: 10, animate })}
+          <p class="fine">${rule}</p>
+        </div>
+        <div class="actions">
+          <button class="btn primary big" data-act="next">${last ? "See the final results" : "Next award"}</button>
+        </div>
+      </main>`;
+  } else {
+    const me = cur.find(e => e.key === myKey);
+    root.innerHTML = `
+      <p class="q-eyebrow">Leaderboard</p>
+      ${me ? `<h1 class="p-title">You're #${me.rank}</h1><p class="fine">${me.pts} point${me.pts === 1 ? "" : "s"} so far. ${rule}</p>` : `<p class="fine">${rule}</p>`}
+      ${lbHTML(cur, prev, { limit: 5, me: myKey, animate })}`;
+    root.classList.toggle("animate-board", animate);
+  }
+  settleBars(root, animate);
+}
+
+function barsHTML(r) {
+  const entries = Object.entries(r.counts || {}).map(([k, n]) => ({ k, n: +n || 0, name: (r.names && r.names[k]) || "Someone" })).filter(e => e.n > 0).sort((a, b) => b.n - a.n).slice(0, 8);
+  if (!entries.length) return "";
+  const max = entries[0].n;
+  return `<ul class="bars">${entries.map(e => `
+    <li class="${e.n === max ? "top" : ""}"><span class="nm">${esc(e.name)}</span><span class="track"><span class="fill" style="width:${Math.round(e.n / max * 100)}%"></span></span><span class="n">${e.n}</span></li>`).join("")}</ul>`;
+}
+function winnerText(r) {
+  if (!r || !r.winners.length) return null;
+  const n = r.winners.map(w => w.name);
+  return n.length === 1 ? n[0] : n.length === 2 ? n.join(" & ") : n.slice(0, -1).join(", ") + " & " + n[n.length - 1];
+}
+
+function buildReveal(root, isHost) {
+  const r = S.results[S.idx];
+  const wt = winnerText(r);
+  const animate = !firstBuild && !reduceMotion;
+  const last = S.idx >= S.prompts.length - 1;
+  const tie = r && r.winners.length > 1;
+  let mineTxt = "";
+  if (!isHost) {
+    const v = currentVote();
+    const iWon = r && r.winners.some(w => w.key === myKey);
+    const pickName = v ? ((S.roster.find(x => x.key === v.pick) || {}).name || "someone") : null;
+    mineTxt = iWon ? `<p class="p-title after late">That's you!</p>` : `<p class="mine after late">${pickName ? `You voted for ${esc(pickName)}.` : "You didn't vote this round."}</p>`;
+  }
+  const inner = `
+    <div class="reveal-wrap">
+      <p class="${isHost ? "prompt small" : "p-prompt"}">${esc(S.prompts[S.idx] || "")}</p>
+      <div class="drum" aria-hidden="true"><span>3</span><span>2</span><span>1</span></div>
+      <p class="winner-label after">${wt ? (tie ? "It's a tie" : "And the award goes to") : "Nobody voted"}</p>
+      <p class="winner after ${wt ? "" : "none"}">${wt ? esc(wt) : "No winner"}</p>
+      ${isHost && r ? `<div class="after late" style="width:100%;display:grid;justify-items:center">${barsHTML(r)}</div>` : ""}
+      ${mineTxt}
+    </div>`;
+  if (isHost) {
+    root.innerHTML = `
+      <main class="stage ${animate ? "animate" : ""}">
+        ${topbarHTML()}
+        <div class="center">${inner}</div>
+        <div class="actions after late">
+          <button class="btn primary big" data-act="board">Show the leaderboard</button>
+        </div>
+        <canvas class="confetti" id="confetti"></canvas>
+      </main>`;
+  } else {
+    root.innerHTML = inner;
+    root.classList.toggle("animate", animate);
+  }
+  if (wt && !firstBuild) {
+    const fire = () => { const c = document.getElementById("confetti"); if (c) confetti(c); };
+    if (animate) setTimeout(fire, 3000); else fire();
+  }
+}
+
+function buildDone(root, isHost) {
+  const rows = S.prompts.map((p, i) => ({ p, r: S.results[i] }));
+  const fin = standings(S.results.length - 1);
+  const champs = fin.length && fin[0].pts > 0 ? fin.filter(e => e.rank === 1) : [];
+  const listHTML = rows.length ? `<ol class="awards-list">${rows.map(({ p, r }) => {
+    const wt = winnerText(r);
+    return `<li><span>${esc(p)}</span><span class="who ${wt ? "" : "none"}">${wt ? esc(wt) : (r ? "No votes" : "Skipped")}</span></li>`;
+  }).join("")}</ol>` : `<p class="empty">No awards were handed out.</p>`;
+  const champHTML = champs.length ? `<div class="champ"><p class="q-eyebrow">Friendsgiving ${YEAR} champion${champs.length > 1 ? "s" : ""}</p><p class="winner">${esc(champs.map(c => c.name).join(" & "))}</p></div>` : "";
+  const boardHTML = `<h2>Final standings</h2>${lbHTML(fin, null, { limit: isHost ? 10 : 5, me: isHost ? null : myKey, animate: false })}`;
+  if (isHost) {
+    root.innerHTML = `
+      <main class="done">
+        <div class="topbar"><span class="round">Final results</span><span id="conn">${connHTML()}</span></div>
+        <h1>The ${YEAR} Friendsgiving Awards</h1>
+        ${champHTML}
+        ${boardHTML}
+        <h2>Every award</h2>
+        ${listHTML}
+        <div class="actions" style="justify-content:flex-start">
+          <button class="btn primary big" data-act="again">Play another round</button>
+          <button class="btn" data-act="copy">Copy the results</button>
+          <span id="copied" class="fine" role="status"></span>
+        </div>
+      </main>
+      <canvas class="confetti" id="confetti" style="position:fixed"></canvas>`;
+  } else {
+    root.innerHTML = `<p class="p-round">Final results</p><h1 class="p-title">The ${YEAR} Friendsgiving Awards</h1>${champHTML}${boardHTML}<h2>Every award</h2>${listHTML}`;
+  }
+  settleBars(root, false);
+  if (champs.length && !firstBuild) setTimeout(() => { const c = document.getElementById("confetti"); if (c) confetti(c); }, 300);
+}
+
+function buildPlayer() {
+  const head = `
+    <header class="p-head">
+      <span class="mark">Friendsgiving<br>Superlatives</span>
+      ${myName && !renaming ? `<button class="me" data-act="rename" title="Change your name">You: ${esc(myName)}</button>` : ""}
+    </header>`;
+  let body;
+  const k = lastKey;
+  if (k === "p:name") {
+    body = `<div class="p-body mid">
+      <p class="p-round">Room ${esc(roomCode)}</p>
+      <h1 class="p-title">What should we call you?</h1>
+      <p class="fine">This is the name everyone votes for.</p>
+      <form id="nameForm" class="name-form" autocomplete="off">
+        <label for="nameInput" style="position:absolute;left:-9999px">Your name</label>
+        <input id="nameInput" type="text" maxlength="24" placeholder="Your name" value="${esc(myName)}" required>
+        <button class="btn primary big" type="submit">${myName ? "Save" : "Join the game"}</button>
+      </form>
+      <div id="pnote"></div>
+    </div>`;
+  } else if (k === "p:wait") {
+    body = `<div class="p-body mid"><h1 class="p-title">Hi, ${esc(myName)}.</h1><p class="fine">Joining room ${esc(roomCode)}…</p><div id="pnote"></div></div>`;
+  } else if (S.phase === "setup") {
+    body = `<div class="p-body mid">
+      <h1 class="p-title">You're in, ${esc(myName)}.</h1>
+      <p class="fine">The host will start the awards soon. Keep this page open.</p>
+      <p class="p-round" id="herecount"></p>
+      <ul class="chips here-list" id="herelist"></ul>
+      <div id="pnote"></div>
+    </div>`;
+  } else if (S.phase === "vote") {
+    const w = words(S.prompts[S.idx]);
+    body = `<div class="p-body ${!firstBuild && !reduceMotion ? "intro" : ""}" style="--qd:${w.end.toFixed(2)}s">
+      <p class="q-eyebrow">Award #${S.idx + 1} of ${S.prompts.length}</p>
+      <h1 class="p-prompt">${w.html}</h1>
+      <div class="nominees after-q" id="nominees"></div>
+      <p class="fine after-q" id="votehint"></p>
+      <div id="pnote"></div>
+    </div>`;
+  } else if (S.phase === "reveal") {
+    body = `<div class="p-body mid" id="revealBody"></div>`;
+  } else if (S.phase === "board") {
+    body = `<div class="p-body" id="boardBody"></div>`;
+  } else {
+    body = `<div class="p-body" id="doneBody"></div>`;
+  }
+  app.innerHTML = `<main class="player">${head}${body}</main><canvas class="confetti" id="confetti" style="position:fixed"></canvas>`;
+  if (k !== "p:name" && k !== "p:wait") {
+    if (S.phase === "reveal") buildReveal(document.getElementById("revealBody"), false);
+    if (S.phase === "board") buildBoard(document.getElementById("boardBody"), false);
+    if (S.phase === "done") buildDone(document.getElementById("doneBody"), false);
+  }
+  const nf = document.getElementById("nameForm");
+  if (nf) {
+    const inp = document.getElementById("nameInput");
+    if (!("ontouchstart" in window)) inp.focus();
+    nf.addEventListener("submit", e => {
+      e.preventDefault();
+      const n = cleanName(inp.value);
+      if (!n) return;
+      myName = n; renaming = false; LS.set("fsg.name", n);
+      sendHello();
+      render();
+    });
+  }
+}
+
+function playerNote() {
+  if (net === "nolib") return `<p class="notice">Couldn't load the game. Check your internet connection, then reload.</p>`;
+  if (net === "nohost") return `<p class="notice">Can't find room ${esc(roomCode)}. Check the code and make sure the host screen is open. Still trying… <button class="btn ghost" data-act="new-code" style="margin-top:.5rem">Enter a different code</button></p>`;
+  if (net === "lost" || net === "bad") return `<p class="notice">Lost the connection. Reconnecting… If this keeps happening, join the party Wi‑Fi.</p>`;
+  if (net === "connecting" || net === "idle") return `<p class="notice" style="border-left-color:var(--gold)">Connecting…</p>`;
+  return "";
+}
+
+function renderDynamic() {
+  const conn = document.getElementById("conn");
+  if (conn) conn.innerHTML = connHTML();
+
+  if (mode === "host" && S.phase === "setup") {
+    const ul = document.getElementById("roster");
+    if (ul) {
+      ul.innerHTML = S.roster.length ? S.roster.map(r => `
+        <li class="chip"><span class="dot ${online.has(r.key) || r.key.startsWith("x:") ? "on" : ""}" title="${r.key.startsWith("x:") ? "Votes on this screen" : online.has(r.key) ? "Phone connected" : "Phone not connected"}"></span><span class="nm">${esc(r.name)}</span>
+        <button class="x" data-act="remove" data-key="${esc(r.key)}" aria-label="Remove ${esc(r.name)}">×</button></li>`).join("")
+        : `<li class="empty">Nobody yet. Names appear here as people join.</li>`;
+    }
+    const rc = document.getElementById("rcount"); if (rc) rc.textContent = S.roster.length ? `(${S.roster.length})` : "";
+    const list = parsePrompts();
+    const pc = document.getElementById("pcount"); if (pc) pc.textContent = `${list.length} award${list.length === 1 ? "" : "s"}`;
+    const st = document.getElementById("start"); const hint = document.getElementById("startHint");
+    if (st) {
+      const ok = list.length > 0 && S.roster.length >= 2;
+      st.disabled = !ok;
+      hint.textContent = ok ? "" : S.roster.length < 2 ? "You need at least two people at the table." : "Add at least one award.";
+    }
+  }
+
+  if (mode === "host" && S.phase === "vote") {
+    const vc = document.getElementById("vcount"); if (vc) vc.textContent = votes.size;
+    const voterKeys = new Set(S.roster.filter(r => online.has(r.key) || votes.has(r.key) || r.key.startsWith("x:")).map(r => r.key));
+    const vt = document.getElementById("vtotal"); if (vt) vt.textContent = Math.max(voterKeys.size, votes.size);
+    const ul = document.getElementById("voters");
+    if (ul) ul.innerHTML = S.roster.filter(r => voterKeys.has(r.key)).map(r => `<li class="chip ${votes.has(r.key) ? "voted" : ""}"><span class="nm">${esc(r.name)}</span></li>`).join("");
+    renderBallot();
+  }
+
+  if (mode === "player") {
+    const note = document.getElementById("pnote"); if (note) note.innerHTML = playerNote();
+    const hl = document.getElementById("herelist");
+    if (hl) {
+      hl.innerHTML = S.roster.map(r => `<li class="chip" style="padding:.35rem .85rem"><span class="nm">${esc(r.name)}</span></li>`).join("");
+      const hc = document.getElementById("herecount"); if (hc) hc.textContent = S.roster.length ? `${S.roster.length} at the table` : "";
+    }
+    const nom = document.getElementById("nominees");
+    if (nom) {
+      const v = currentVote();
+      nom.innerHTML = S.roster.map(r => `
+        <button class="nominee ${v && v.pick === r.key ? "sel" : ""}" data-act="vote" data-key="${esc(r.key)}" aria-pressed="${v && v.pick === r.key ? "true" : "false"}">
+          <span class="nm">${esc(r.name)}</span><span class="tag">${r.key === myKey ? "you" : v && v.pick === r.key ? "your vote" : ""}</span>
+        </button>`).join("") || `<p class="empty">No nominees yet.</p>`;
+      const vh = document.getElementById("votehint");
+      if (vh) vh.textContent = v ? "Vote locked in. Tap another name to change it before the reveal." : "Tap a name. Your vote stays secret.";
+    }
+  }
+}
+
+function renderBallot() {
+  const ov = document.getElementById("overlay");
+  if (!ov) return;
+  if (!ballot) { ov.innerHTML = ""; return; }
+  if (ballot.step === "who") {
+    ov.innerHTML = `<div class="overlay" role="dialog" aria-modal="true" aria-label="Vote on this screen"><div class="ballot">
+      <h2>Who's voting?</h2>
+      <p class="fine">Pass the device around. Each person taps their own name, then picks in secret.</p>
+      <div class="pick-grid">${S.roster.map(r => `<button class="btn ${votes.has(r.key) ? "had" : ""}" data-act="b-who" data-key="${esc(r.key)}">${esc(r.name)}${votes.has(r.key) ? " ✓" : ""}</button>`).join("")}</div>
+      <div><button class="btn ghost" data-act="b-close">Done voting</button></div>
+    </div></div>`;
+  } else if (ballot.step === "pick") {
+    const voter = S.roster.find(r => r.key === ballot.voter);
+    ov.innerHTML = `<div class="overlay" role="dialog" aria-modal="true" aria-label="Secret ballot"><div class="ballot">
+      <p class="fine">${esc(voter ? voter.name : "")}, cover the screen.</p>
+      <p class="q">${esc(S.prompts[S.idx] || "")}</p>
+      <div class="pick-grid">${S.roster.map(r => `<button class="btn" data-act="b-pick" data-key="${esc(r.key)}">${esc(r.name)}</button>`).join("")}</div>
+      <div><button class="btn ghost" data-act="b-back">Back</button></div>
+    </div></div>`;
+  } else {
+    ov.innerHTML = `<div class="overlay" role="dialog" aria-modal="true" aria-label="Vote saved"><div class="ballot">
+      <h2>Vote saved</h2><p class="fine">Pass it to the next person.</p>
+      <div class="actions"><button class="btn primary big" data-act="b-next">Next voter</button><button class="btn" data-act="b-close">Done voting</button></div>
+    </div></div>`;
+  }
+}
+
+/* ---------------- Confetti ---------------- */
+function confetti(canvas) {
+  if (reduceMotion) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  canvas.width = W * dpr; canvas.height = H * dpr; ctx.scale(dpr, dpr);
+  const cols = ["#ffd23f", "#ff8c42", "#a066ff", "#f4e4c1", "#c9a7ff"];
+  const ps = Array.from({ length: 160 }, () => ({
+    x: W / 2 + (Math.random() - .5) * W * .35, y: H * .4,
+    vx: (Math.random() - .5) * 14, vy: -Math.random() * 13 - 5,
+    s: 5 + Math.random() * 7, c: cols[(Math.random() * cols.length) | 0],
+    r: Math.random() * 6, vr: (Math.random() - .5) * .3
+  }));
+  let t = 0;
+  (function frame() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of ps) {
+      p.vy += .32; p.x += p.vx; p.y += p.vy; p.vx *= .99; p.r += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore();
+    }
+    if (++t < 220 && document.body.contains(canvas)) requestAnimationFrame(frame); else ctx.clearRect(0, 0, W, H);
+  })();
+}
+
+/* ---------------- Events ---------------- */
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]");
+  if (!el || el.disabled) return;
+  const act = el.dataset.act, key = el.dataset.key;
+  switch (act) {
+    case "go-host": startHost(); break;
+    case "start": startGame(); break;
+    case "remove": if (key) removePerson(key); break;
+    case "reset-prompts": {
+      promptText = DEFAULT_PROMPTS.join("\n"); LS.set("fsg.prompts", promptText);
+      const ta = document.getElementById("prompts"); if (ta) ta.value = promptText;
+      renderDynamic(); break;
+    }
+    case "reveal": doReveal(); break;
+    case "skip": skipAward(); break;
+    case "next": nextAward(); break;
+    case "board": goBoard(); break;
+    case "end": endEarly(); break;
+    case "again": backToSetup(); break;
+    case "copy": {
+      const lines = [`The ${YEAR} Friendsgiving Awards`, ""].concat(S.prompts.map((p, i) => `${i + 1}. ${p}: ${winnerText(S.results[i]) || "no winner"}`));
+      const out = document.getElementById("copied");
+      Promise.resolve().then(() => navigator.clipboard.writeText(lines.join("\n")))
+        .then(() => { if (out) out.textContent = "Copied."; })
+        .catch(() => { if (out) out.textContent = "Couldn't copy here. Take a photo of the screen instead."; });
+      break;
+    }
+    case "ballot": ballot = { step: "who" }; renderBallot(); break;
+    case "b-who": ballot = { step: "pick", voter: key }; renderBallot(); break;
+    case "b-pick": if (ballot && ballot.voter && S.roster.some(r => r.key === key)) { votes.set(ballot.voter, key); saveHost(); ballot = { step: "done" }; renderDynamic(); } break;
+    case "b-back": case "b-next": ballot = { step: "who" }; renderBallot(); break;
+    case "b-close": ballot = null; renderBallot(); break;
+    case "vote": if (key && S.phase === "vote") castVote(key); break;
+    case "rename": renaming = true; render(); break;
+    case "new-code": {
+      clearTimeout(retryTimer);
+      try { if (peer) peer.destroy(); } catch (err) {} peer = null; hostConn = null;
+      mode = null; net = "idle"; stateSeen = false;
+      try { history.replaceState(null, "", location.pathname); } catch (err) {}
+      render(); break;
+    }
+  }
+});
+document.addEventListener("keydown", e => {
+  if (mode !== "host") return;
+  const t = e.target;
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT")) return;
+  if (e.key === "Escape" && ballot) { ballot = null; renderBallot(); return; }
+  if (ballot) return;
+  if (e.key === "ArrowRight") {
+    if (S.phase === "vote") doReveal();
+    else if (S.phase === "reveal") goBoard();
+    else if (S.phase === "board") nextAward();
+  }
+});
+
+/* ---------------- Boot ---------------- */
+function startHost() {
+  mode = "host";
+  roomCode = cleanCode(LS.get("fsg.room")) || newCode();
+  LS.set("fsg.room", roomCode);
+  restoreHost();
+  stateSeen = true;
+  try { history.replaceState(null, "", location.pathname + "#host"); } catch (e) {}
+  render();
+  openHost();
+}
+function startPlayer() {
+  mode = "player";
+  render();
+  playerConnect();
+}
+
+if (roomCode) startPlayer();
+else if (location.hash === "#host") startHost();
+else render();
+})();
+</script>
+</body>
+</html>
