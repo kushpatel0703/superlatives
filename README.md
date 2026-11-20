@@ -25,6 +25,20 @@ Any other static host works too, such as Netlify or Cloudflare Pages.
 
 Anyone without a phone can be added by name on the host screen. **Vote on this screen** opens a pass-around secret ballot.
 
+## Chaos features (toggle them on the setup screen)
+
+- **🎰 Snitch Roulette:** strikes at random. A wheel picks one voter and shows their vote on the TV.
+- **⚖️ Defend Yourself:** some winners get 30 seconds to plead their case. The table votes on their phones: guilty +2, acquitted −1.
+- **⚡ Double Down:** each player gets one ×2 vote per 7 awards.
+- **🔮 Oracle Bets:** after voting, guess the winner. +1 if you're right.
+- **✍️ Write-ins:** halfway through, everyone writes one award. They're added to the end, and the author is revealed.
+
+Scoring: 1 point per vote you get, +2 per award won, plus the Oracle and courtroom points above. Nobody can vote for themselves.
+
+At the end the game hands out awards worked out from how people voted: The Grudge, The Stalker, The Sheep, The Lone Wolf, The NPC, The Prophet, Repeat Offender, The Speedrunner and The Sloth. Every phone gets a yearbook card.
+
+**Running the night:** press **P** or click Pause to freeze the game while people talk. Tap 👑 next to a phone player to make them co-host, which gives them Pause and Next buttons. After the game starts the room locks (🔒), so new arrivals need your OK to join.
+
 ## Good to know
 
 - **Keep the host screen open.** It holds the game. If it reloads, it picks up where it left off and phones reconnect by themselves within a few seconds.
