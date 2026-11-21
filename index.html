@@ -521,6 +521,40 @@ body.has-cobar .vote-bar { bottom: 4.5rem; }
 }
 .pill.author { border-color: var(--orange); background: rgba(255,140,66,.18); color: var(--gold); font-size: 1.05rem; }
 #writeInput { font-size: 1.1rem; min-height: 6rem; }
+
+/* ================= QA round 2: visual fixes ================= */
+:root { --display: "Bagel Fat One", "Arial Black", "Arial Rounded MT Bold", sans-serif; }
+.stage { overflow: visible; overflow-x: clip; }
+.steps, .chaos-tiles { width: min(62rem, 100%); }
+.lb { width: min(54rem, 100%); }
+.setup { max-width: 74rem; }
+.done { max-width: 60rem; }
+.bars { width: min(40rem, 100%); }
+.voters { max-width: 56rem; }
+.wheel-wrap { width: min(46vh, 80vw, 29rem); }
+.wheel-pointer { top: -22px; }
+.prompt.long { font-size: clamp(1.6rem, min(3.6vw, 5vh), 3rem); max-width: 28ch; }
+.stamp { margin-block: .6em; }
+.p-body .stamp { font-size: clamp(2rem, 11vw, 4rem); max-width: 100%; }
+.winner.long { font-size: clamp(2rem, 6vw, 4.5rem); }
+.p-body .winner.long { font-size: clamp(1.5rem, 8vw, 2.4rem); }
+.nominees.grid2 .nominee .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+@media (max-width: 360px) { .nominees.grid2 { grid-template-columns: 1fr; } }
+.cobar .btn { white-space: nowrap; font-size: .85rem; overflow: hidden; text-overflow: ellipsis; }
+body.has-cobar .vote-bar { bottom: 5.5rem; }
+.pending-bar.on { top: 5rem; bottom: auto; left: 1rem; max-width: 26rem; }
+.spin-head { animation: spinGone .3s ease 7.4s forwards; }
+@keyframes spinGone { to { opacity: 0; height: 0; overflow: hidden; margin: 0; } }
+.chaos-still .spin-head { display: none; }
+@media (max-width: 600px) {
+  .pause-title, .p-body .winner, .chooser .logo, .yb-name, .p-title, .p-prompt { text-shadow: .05em .05em 0 var(--purple); }
+}
+.chaos-tile, .steps li { align-content: start; }
+.chaos-tiles { grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); }
+#shuffle { width: 1.2rem; height: 1.2rem; accent-color: var(--gold); }
+.meta-list li { align-content: start; align-items: start; }
+.lb .nm { justify-content: flex-start; }
+@media (prefers-reduced-motion: reduce) { .spin-head { display: none; } }
 </style>
 </head>
 <body>
@@ -579,7 +613,7 @@ const LS = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 };
-const cleanName = s => typeof s === "string" ? s.normalize("NFC").replace(/[\u0000-\u001f\u007f-\u009f­͏؜ᅟᅠ឴឵᠎​-‏‪-‮⁠-⁯ㅤ﻿ﾠ]/g, "").replace(/[̀-ͯ҃-҉᪰-᫿᷀-᷿⃐-⃿︠-︯]{2,}/g, "").replace(/\s+/g, " ").trim().slice(0, 24) : "";
+const cleanName = s => typeof s === "string" ? s.normalize("NFC").replace(/[\u0000-\u001f\u007f-\u009f­͏؜ᅟᅠ឴឵᠎​-‏‪-‮⁠-⁯ㅤ﻿ﾠ]/g, "").replace(/[̀-ͯ҃-҉᪰-᫿᷀-᷿⃐-⃿︠-︯]{2,}/g, "").replace(/[⚔&]/g, "").replace(/\s+/g, " ").trim().slice(0, 24) : "";
 const cleanText = (s, n) => typeof s === "string" ? s.replace(/[\u0000-\u001f\u007f‪-‮⁦-⁩]/g, " ").trim().slice(0, n) : "";
 const cleanCode = s => String(s || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 6);
 const newCode = () => { const A = "ABCDEFGHJKMNPQRSTUVWXYZ"; let s = ""; for (let i = 0; i < 5; i++) s += A[(Math.random() * A.length) | 0]; return s; };
@@ -600,7 +634,7 @@ const myKey = "u:" + pid;
 function defaultOpts() { return { snitch: true, defend: true, dd: true, oracle: true, writein: true }; }
 function blankState() {
   return { gameId: rid(), phase: "setup", idx: 0, prompts: [], roster: [], hidden: [], results: [], ts: 0,
-           cohost: null, paused: false, locked: false, pending: [], opts: defaultOpts(), ddPer: 0, ddLeft: {}, defend: null, meta: [], fin: 0, hostNow: 0, authors: {}, writeAt: -1, writeDone: false, writeCount: 0 };
+           cohost: null, paused: false, locked: false, pending: [], opts: defaultOpts(), ddPer: 0, defend: null, meta: [], fin: 0, hostNow: 0, authors: {}, wi: [], writeAt: -1, writeDone: false, writeCount: 0 };
 }
 const PHASES = ["setup", "rules", "writein", "vote", "reveal", "snitch", "defend", "board", "finale", "done"];
 let S = blankState();
@@ -615,6 +649,9 @@ const votes = new Map();         // voter key -> {pick, dd}
 const preds = new Map();         // voter key -> predicted winner key
 const jury = new Map();          // voter key -> "g" | "a"
 const flips = new Map();        // voter key -> times they changed their vote this round
+let ddLeft = {};                 // voter key -> Double Downs left (host-only; each phone is told its own)
+let snitchNext = {};             // award index -> planned snitch reveal (host-only until the wheel)
+let authorsAll = {};             // award index -> write-in author (host-only until revealed)
 const firstVoteAt = new Map();  // voter key -> ms from award shown to their first tap
 let roundStart = 0;
 const writeins = new Map();     // voter key -> their write-in text (secret until it is played)
@@ -635,22 +672,24 @@ let myName = cleanName(LS.get("fsg.name") || "");
 let myVote = null, myPred = null, myJury = null, myCard = null;
 try { myVote = JSON.parse(LS.get("fsg.vote") || "null"); } catch (e) { myVote = null; }
 let renaming = false, kicked = false, pnotice = "";
-let clockOffset = 0;             // host clock minus phone clock
+try { myJury = JSON.parse(LS.get("fsg.jury") || "null"); } catch (e) { myJury = null; }
+let clockOffset = 0;
+let myDD = 0;                    // my Double Downs left (told privately by the host)             // host clock minus phone clock
 
 function sanitizeState(d) {
   if (!d || typeof d !== "object" || !PHASES.includes(d.phase)) return null;
   const str = (v, n) => typeof v === "string" ? v.slice(0, n) : "";
   const roster = Array.isArray(d.roster) ? d.roster.filter(r => r && typeof r.key === "string" && typeof r.name === "string").slice(0, 60).map(r => ({ key: r.key.slice(0, 60), name: cleanName(r.name) || "Someone" })) : [];
-  const prompts = Array.isArray(d.prompts) ? d.prompts.filter(p => typeof p === "string").slice(0, 80).map(p => cleanText(p, 140)) : [];
+  const prompts = Array.isArray(d.prompts) ? d.prompts.filter(p => typeof p === "string").slice(0, 120).map(p => cleanText(p, 140)) : [];
   const numMap = o => { const out = {}; if (o && typeof o === "object") for (const [k, v] of Object.entries(o).slice(0, 80)) if (typeof v === "number" && isFinite(v)) out[k.slice(0, 60)] = v; return out; };
   const strMap = o => { const out = {}; if (o && typeof o === "object") for (const [k, v] of Object.entries(o).slice(0, 80)) if (typeof v === "string") out[k.slice(0, 60)] = cleanName(v); return out; };
-  const results = Array.isArray(d.results) ? d.results.slice(0, 80).map(r => {
+  const results = Array.isArray(d.results) ? d.results.slice(0, 120).map(r => {
     if (!r || typeof r !== "object") return null;
     const sn = r.snitch && typeof r.snitch === "object" ? {
       voter: str(r.snitch.voter, 60), voterName: cleanName(r.snitch.voterName), pick: str(r.snitch.pick, 60), pickName: cleanName(r.snitch.pickName),
       wheel: Array.isArray(r.snitch.wheel) ? r.snitch.wheel.slice(0, 40).map(cleanName) : [], target: Number.isInteger(r.snitch.target) ? r.snitch.target : 0
     } : null;
-    const df = r.defend && typeof r.defend === "object" ? { key: str(r.defend.key, 60), name: cleanName(r.defend.name), verdict: r.defend.verdict === "guilty" ? "guilty" : "acquitted", guilty: +r.defend.guilty || 0, acquit: +r.defend.acquit || 0 } : null;
+    const df = r.defend && typeof r.defend === "object" ? { key: str(r.defend.key, 60), name: cleanName(r.defend.name), verdict: ["guilty", "hung"].includes(r.defend.verdict) ? r.defend.verdict : "acquitted", guilty: +r.defend.guilty || 0, acquit: +r.defend.acquit || 0 } : null;
     return {
       prompt: cleanText(r.prompt, 140), counts: numMap(r.counts), names: strMap(r.names),
       winners: Array.isArray(r.winners) ? r.winners.filter(w => w && typeof w.name === "string").slice(0, 60).map(w => ({ key: str(w.key, 60), name: cleanName(w.name) })) : [],
@@ -660,7 +699,7 @@ function sanitizeState(d) {
   }) : [];
   const dfl = d.defend && typeof d.defend === "object" ? {
     key: str(d.defend.key, 60), name: cleanName(d.defend.name), endsAt: typeof d.defend.endsAt === "number" ? d.defend.endsAt : null,
-    left: +d.defend.left || 0, verdict: ["guilty", "acquitted"].includes(d.defend.verdict) ? d.defend.verdict : null,
+    left: +d.defend.left || 0, verdict: ["guilty", "acquitted", "hung"].includes(d.defend.verdict) ? d.defend.verdict : null,
     guilty: +d.defend.guilty || 0, acquit: +d.defend.acquit || 0, startsAt: +d.defend.startsAt || 0
   } : null;
   const meta = Array.isArray(d.meta) ? d.meta.slice(0, 10).map(m => ({ emoji: cleanText(m && m.emoji, 8), title: cleanText(m && m.title, 40), who: cleanText(m && m.who, 80), line: cleanText(m && m.line, 160), keys: Array.isArray(m && m.keys) ? m.keys.filter(k => typeof k === "string").slice(0, 4) : [] })) : [];
@@ -675,8 +714,8 @@ function sanitizeState(d) {
     paused: !!d.paused, locked: !!d.locked,
     pending: Array.isArray(d.pending) ? d.pending.filter(p => p && typeof p.key === "string").slice(0, 10).map(p => ({ key: p.key.slice(0, 60), name: cleanName(p.name) || "Someone" })) : [],
     opts: { snitch: o.snitch !== false, defend: o.defend !== false, dd: o.dd !== false, oracle: o.oracle !== false, writein: o.writein !== false },
-    authors: strMap(d.authors), writeAt: Number.isInteger(d.writeAt) ? d.writeAt : -1, writeDone: !!d.writeDone, writeCount: +d.writeCount || 0,
-    ddPer: +d.ddPer || 0, ddLeft: numMap(d.ddLeft), defend: dfl, meta,
+    authors: strMap(d.authors), wi: Array.isArray(d.wi) ? d.wi.filter(Number.isInteger).slice(0, 120) : [], writeAt: Number.isInteger(d.writeAt) ? d.writeAt : -1, writeDone: !!d.writeDone, writeCount: +d.writeCount || 0,
+    ddPer: +d.ddPer || 0, defend: dfl, meta,
     fin: Number.isInteger(d.fin) && d.fin >= 0 ? d.fin : 0,
     hostNow: typeof d.hostNow === "number" ? d.hostNow : 0
   };
@@ -762,31 +801,33 @@ function onHostData(conn, d) {
     // one player per connection: a connection can't swap to a different identity
     const prev = conns.get(cid);
     if (prev && prev.key !== key) { tell(conn, { t: "nack", why: "taken" }); return; }
-    if (!secrets.has(p)) {
-      if (secrets.size > 300) return;
-      secrets.set(p, sec);
-    }
-    conns.set(cid, { conn, key });
-    let changed = false;
+    let changed = false, admitted = false;
     if (S.hidden.includes(key)) {
       tell(conn, { t: "nack", why: "removed" });
     } else {
       const r = S.roster.find(x => x.key === key);
       name = uniqueName(name, key);
-      if (!r && S.locked) {
-        if (!S.pending.some(p => p.key === key)) { if (S.pending.length < 10) { S.pending.push({ key, name }); changed = true; } }
-        tell(conn, { t: "nack", why: "pending" });
-      } else if (!r && joinBurst()) {
+      if (r) {
+        admitted = true;
+        if (r.name !== name && S.phase === "setup") { r.name = name; changed = true; }
+      } else if (S.locked) {
+        const waiting = S.pending.some(x => x.key === key);
+        if (waiting || S.pending.length < 12) {
+          if (!waiting) { S.pending.push({ key, name }); changed = true; }
+          admitted = true;
+          tell(conn, { t: "nack", why: "pending" });
+        } else { pendingOverflow += 1; tell(conn, { t: "nack", why: "busy" }); renderDynamic(); }
+      } else if (joinBurst()) {
         tell(conn, { t: "nack", why: "slow" });
-      } else if (!r) {
-        if (S.roster.length < 60) {
-          S.roster.push({ key, name }); changed = true;
-          if (S.phase !== "setup" && S.ddLeft[key] == null) S.ddLeft[key] = S.ddPer;
-        } else tell(conn, { t: "nack", why: "full" });
-      } else if (r.name !== name) { r.name = name; changed = true; }
+      } else if (S.roster.length < 60) {
+        S.roster.push({ key, name }); changed = true; admitted = true;
+        if (S.phase !== "setup" && ddLeft[key] == null) ddLeft[key] = S.ddPer;
+      } else tell(conn, { t: "nack", why: "full" });
     }
+    if (admitted && !secrets.has(p)) { secrets.set(p, sec); pruneSecrets(); }
+    conns.set(cid, { conn, key, outsider: !admitted || S.pending.some(x => x.key === key) });
     recomputeOnline();
-    sendState(conn);
+    if (admitted && !S.pending.some(x => x.key === key)) { sendState(conn); sendDD(conn, key); }
     if (S.phase === "finale" || S.phase === "done") sendCard(conn, key);
     if (changed) { scheduleCommit(); if (["board", "finale", "done"].includes(S.phase)) setTimeout(quietRebuild, 400); }
     else renderDynamic();
@@ -794,28 +835,35 @@ function onHostData(conn, d) {
   }
   const entry = conns.get(cid);
   if (!entry) return;
+  if (entry.outsider) { if (["vote", "pred", "jury", "write"].includes(d.t)) tell(conn, { t: "nack", why: S.pending.some(p => p.key === entry.key) ? "pending" : "removed" }); return; }
   const inGame = !S.hidden.includes(entry.key) && S.roster.some(x => x.key === entry.key);
   if (d.t === "vote") {
     if (!inGame) { tell(conn, { t: "nack", why: "removed" }); return; }
-    const ok = S.phase === "vote" && !S.paused && d.g === S.gameId && d.r === S.idx && typeof d.pick === "string" &&
+    const ok = S.phase === "vote" && d.g === S.gameId && d.r === S.idx && typeof d.pick === "string" &&
       d.pick !== entry.key && S.roster.some(x => x.key === d.pick);
-    if (!ok) { tell(conn, { t: "nack", why: "closed", g: d.g, r: d.r }); return; }
-    const dd = !!d.dd && S.opts.dd && (S.ddLeft[entry.key] || 0) > 0;
+    if (!ok) {
+      const h = history[d.r];
+      const known = d.g === S.gameId && ((S.phase === "vote" && d.r === S.idx) || (h && h.ballots && h.ballots[entry.key] === d.pick));
+      if (!known && d.g === S.gameId && Number.isInteger(d.r) && d.r <= S.idx) tell(conn, { t: "nack", why: "closed", g: d.g, r: d.r });
+      return;
+    }
+    const dd = !!d.dd && S.opts.dd && (ddLeft[entry.key] || 0) > 0;
     if (!firstVoteAt.has(entry.key) && roundStart) firstVoteAt.set(entry.key, Math.max(0, Date.now() - roundStart));
     const before = votes.get(entry.key);
-    if (before && before.pick !== d.pick) flips.set(entry.key, (flips.get(entry.key) || 0) + 1);
+    if (before && before.pick !== d.pick) flips.set(entry.key, Math.min(5, (flips.get(entry.key) || 0) + 1));
     votes.set(entry.key, { pick: d.pick, dd });
     saveHost(); renderDynamic();
   } else if (d.t === "pred") {
     if (!inGame || !S.opts.oracle || S.phase !== "vote" || d.g !== S.gameId || d.r !== S.idx) return;
-    if (typeof d.pick === "string" && S.roster.some(x => x.key === d.pick)) { preds.set(entry.key, d.pick); saveHost(); }
+    if (typeof d.pick === "string" && d.pick !== entry.key && votes.has(entry.key) && S.roster.some(x => x.key === d.pick)) { preds.set(entry.key, d.pick); saveHost(); }
   } else if (d.t === "jury") {
     if (!inGame || S.phase !== "defend" || !S.defend || S.defend.verdict || entry.key === S.defend.key || d.g !== S.gameId || d.r !== S.idx) return;
     if (d.v === "g" || d.v === "a") { jury.set(entry.key, d.v); saveHost(); renderDynamic(); }
   } else if (d.t === "write") {
-    if (!inGame || S.phase !== "writein") return;
+    if (!inGame) return;
+    if (S.phase !== "writein") { tell(conn, { t: "nack", why: "write-closed" }); return; }
     const text = cleanText(d.text, 100);
-    if (text.length < 3) return;
+    if (text.length < 3 || /\S{26,}/.test(text)) return;
     writeins.set(entry.key, text); S.writeCount = writeins.size;
     saveHost(); scheduleCommit();
   } else if (d.t === "ctl") {
@@ -837,13 +885,30 @@ function admit(key, yes) {
   S.pending = S.pending.filter(x => x.key !== key);
   if (yes && p && !S.roster.some(r => r.key === key) && S.roster.length < 60) {
     S.roster.push({ key, name: uniqueName(p.name, key) });
-    if (S.ddLeft[key] == null) S.ddLeft[key] = S.ddPer;
+    if (ddLeft[key] == null) ddLeft[key] = S.ddPer;
+    for (const c of conns.values()) if (c.key === key) { c.outsider = false; tell(c.conn, { t: "admitted" }); setTimeout(() => { sendState(c.conn); sendDD(c.conn, key); }, 50); }
+  } else if (!yes) {
+    for (const c of conns.values()) if (c.key === key) tell(c.conn, { t: "nack", why: "removed" });
   } else if (!yes && !S.hidden.includes(key)) S.hidden.push(key);
   recomputeOnline(); commit();
 }
+let pendingOverflow = 0;
+function pruneSecrets() {
+  if (secrets.size <= 150) return;
+  const keep = new Set([...S.roster.map(r => r.key), ...S.pending.map(p => p.key), ...S.hidden]);
+  for (const p of [...secrets.keys()]) if (!keep.has("u:" + p)) secrets.delete(p);
+}
+function sendDD(conn, key) { if (S.opts.dd && S.phase !== "setup") tell(conn, { t: "dd", left: ddLeft[key] || 0 }); }
+function sendAllDD() { for (const { conn, key, outsider } of conns.values()) if (!outsider) sendDD(conn, key); }
+function denyAll() {
+  for (const p of S.pending) if (!S.hidden.includes(p.key)) S.hidden.push(p.key);
+  for (const c of conns.values()) if (S.pending.some(p => p.key === c.key)) tell(c.conn, { t: "nack", why: "removed" });
+  S.pending = []; pendingOverflow = 0; commit();
+}
 function tell(conn, msg) { try { if (conn.open) conn.send(msg); } catch (e) {} }
 function uniqueName(name, key) {
-  const norm = n => n.toLowerCase().normalize("NFKC").replace(/\s+/g, "");
+  const LOOK = { "а": "a", "е": "e", "о": "o", "р": "p", "с": "c", "у": "y", "х": "x", "і": "i", "ј": "j", "ѕ": "s", "ԁ": "d", "ɡ": "g", "ӏ": "l", "һ": "h", "ԛ": "q", "ԝ": "w", "ν": "v", "ο": "o", "α": "a", "ι": "i", "κ": "k", "τ": "t", "ρ": "p", "0": "o", "1": "l", "|": "l" };
+  const norm = n => n.toLowerCase().normalize("NFKC").replace(/./gu, c => LOOK[c] || c).replace(/[\s._\-]+/g, "");
   const taken = n => S.roster.some(r => r.key !== key && norm(r.name) === norm(n));
   if (!taken(name)) return name;
   for (let i = 2; i < 99; i++) { const n = cleanName(name.slice(0, 21) + " " + i); if (!taken(n)) return n; }
@@ -856,7 +921,11 @@ function recomputeOnline() {
   for (const { conn, key } of conns.values()) if (conn.open !== false && !S.hidden.includes(key) && S.roster.some(r => r.key === key)) online.add(key);
 }
 function sendState(conn) { S.hostNow = Date.now(); tell(conn, { t: "state", s: S }); }
-function broadcast() { S.hostNow = Date.now(); const msg = { t: "state", s: S }; for (const { conn } of conns.values()) tell(conn, msg); }
+function broadcast() {
+  S.hostNow = Date.now();
+  const msg = { t: "state", s: S };
+  for (const { conn, outsider } of conns.values()) if (!outsider) tell(conn, msg);
+}
 function sendCard(conn, key) { const c = cardFor(key); if (c) tell(conn, { t: "card", card: c }); }
 function sendCards() { for (const { conn, key } of conns.values()) sendCard(conn, key); }
 
@@ -890,17 +959,22 @@ function connectToHost() {
   c.on("open", () => {
     opened = true; clearTimeout(giveUp); net = "ok";
     sendHello();
-    const v = currentVote(); if (v) sendVote(v);
+    const v = currentVote(); if (v && S.phase === "vote") sendVote(v);
     renderDynamic();
   });
   c.on("data", d => {
     if (!d || typeof d !== "object") return;
     if (d.t === "state") applyState(d.s);
+    else if (d.t === "dd") { myDD = Math.max(0, +d.left || 0); renderDynamic(); }
+    else if (d.t === "admitted") { kicked = false; pnotice = ""; render(); }
     else if (d.t === "card") { myCard = sanitizeCard(d.card); render(); }
     else if (d.t === "nack") {
       if (d.why === "removed") kicked = true;
       else if (d.why === "pending") pnotice = "The game already started. The host has to let you in. Hang tight.";
       else if (d.why === "slow") { pnotice = "Lots of people joining at once. Retrying…"; setTimeout(sendHello, 4000); }
+      else if (d.why === "write-closed") pnotice = "Write-ins are closed. Yours didn't make it in.";
+      else if (d.why === "nominee-gone") { if (myVote && myVote.g === d.g && myVote.r === d.r) { myVote = null; LS.set("fsg.vote", "null"); } pnotice = "The person you voted for left the game. Vote again."; }
+      else if (d.why === "busy") pnotice = "Too many people are waiting to join. Ask the host to let you in.";
       else if (d.why === "full") pnotice = "The table is full (60 players). Ask the host to make room.";
       else if (d.why === "taken") pnotice = "Someone else is already using this player. Reload the page to join as yourself.";
       else if (d.why === "closed" && myVote && d.g === myVote.g && d.r === myVote.r) { myVote = null; LS.set("fsg.vote", "null"); pnotice = "That vote came in too late and didn't count."; }
@@ -922,7 +996,9 @@ function applyState(d) {
   const s = sanitizeState(d);
   if (!s) return;
   if (s.hostNow) clockOffset = s.hostNow - Date.now();
+  if (s.gameId !== S.gameId) myCard = null;
   S = s; stateSeen = true;
+  if (S.roster.some(r => r.key === myKey) && !S.hidden.includes(myKey)) { kicked = false; if (pnotice.startsWith("The game already started")) pnotice = ""; }
   if (kicked && !S.hidden.includes(myKey) && S.phase === "setup") kicked = false;
   if (pnotice && pnotice.startsWith("The game already started") && S.roster.some(r => r.key === myKey)) pnotice = "";
   render();
@@ -942,7 +1018,7 @@ function sanitizeCard(c) {
 let commitTimer = null;
 function saveHost() {
   LS.set("fsg.roomAt", String(Date.now()));
-  LS.set("fsg.host", JSON.stringify({ S, votes: [...votes], preds: [...preds], jury: [...jury], history, plan, secrets: [...secrets], writeins: [...writeins], firstVoteAt: [...firstVoteAt], flips: [...flips], roundStart }));
+  LS.set("fsg.host", JSON.stringify({ S, votes: [...votes], preds: [...preds], jury: [...jury], history, plan, secrets: [...secrets], writeins: [...writeins], ddLeft, authorsAll, snitchNext, firstVoteAt: [...firstVoteAt], flips: [...flips], roundStart }));
 }
 function restoreHost() {
   try {
@@ -953,6 +1029,9 @@ function restoreHost() {
     pairs(d.votes, (k, v) => { if (v && typeof v === "object" && typeof v.pick === "string") votes.set(k, { pick: v.pick, dd: !!v.dd }); });
     pairs(d.preds, (k, v) => { if (typeof v === "string") preds.set(k, v); });
     pairs(d.jury, (k, v) => { if (v === "g" || v === "a") jury.set(k, v); });
+    if (d.ddLeft && typeof d.ddLeft === "object") ddLeft = Object.fromEntries(Object.entries(d.ddLeft).filter(([, v]) => typeof v === "number"));
+    if (d.authorsAll && typeof d.authorsAll === "object") authorsAll = Object.fromEntries(Object.entries(d.authorsAll).filter(([, v]) => typeof v === "string"));
+    if (d.snitchNext && typeof d.snitchNext === "object") snitchNext = d.snitchNext;
     pairs(d.flips, (k, v) => { if (typeof v === "number") flips.set(k, v); });
     pairs(d.firstVoteAt, (k, v) => { if (typeof v === "number") firstVoteAt.set(k, v); });
     if (typeof d.roundStart === "number") roundStart = d.roundStart;
@@ -985,15 +1064,15 @@ function startGame() {
   S.gameId = rid(); S.prompts = list; S.idx = 0; S.phase = "rules"; S.results = []; S.meta = []; S.fin = 0;
   S.defend = null; S.paused = false; S.locked = true; S.pending = []; S.opts = Object.assign({}, hostOpts);
   S.ddPer = S.opts.dd ? Math.max(1, Math.floor(n / DD_EVERY)) : 0;
-  S.ddLeft = Object.fromEntries(S.roster.map(r => [r.key, S.ddPer]));
+  ddLeft = Object.fromEntries(S.roster.map(r => [r.key, S.ddPer]));
   plan = { snitch: S.opts.snitch ? pickRounds(n, chaosCount) : [], defend: S.opts.defend ? pickRounds(n, chaosCount) : [] };
-  S.authors = {}; S.writeDone = false; S.writeCount = 0; writeins.clear();
+  S.authors = {}; S.wi = []; authorsAll = {}; snitchNext = {}; S.writeDone = false; S.writeCount = 0; writeins.clear();
   S.writeAt = S.opts.writein && n >= 4 ? Math.floor(n / 2) - 1 : -1;
   history = []; votes.clear(); preds.clear(); jury.clear(); ballot = null;
   commit();
 }
 function startClock() { firstVoteAt.clear(); flips.clear(); roundStart = Date.now(); }
-function beginVoting() { if (S.phase !== "rules") return; S.phase = "vote"; S.idx = 0; votes.clear(); preds.clear(); startClock(); commit(); }
+function beginVoting() { if (S.phase !== "rules") return; S.phase = "vote"; S.idx = 0; votes.clear(); preds.clear(); startClock(); commit(); sendAllDD(); }
 
 function doReveal() {
   if (S.phase !== "vote") return;
@@ -1001,8 +1080,8 @@ function doReveal() {
   let ddCount = 0;
   for (const [voter, v] of votes) {
     if (!S.roster.some(r => r.key === v.pick) || v.pick === voter) continue;
-    const w = v.dd && (S.ddLeft[voter] || 0) > 0 ? 2 : 1;
-    if (w === 2) { S.ddLeft[voter] -= 1; ddUsed[voter] = true; ddCount += 1; }
+    const w = v.dd && (ddLeft[voter] || 0) > 0 ? 2 : 1;
+    if (w === 2) { ddLeft[voter] -= 1; ddUsed[voter] = true; ddCount += 1; }
     counts[v.pick] = (counts[v.pick] || 0) + w;
     ballots[voter] = v.pick;
   }
@@ -1025,12 +1104,14 @@ function doReveal() {
     const hits = wheel.map((n, i) => n === nm(v) ? i : -1).filter(i => i >= 0);
     snitch = { voter: v, voterName: nm(v), pick: ballots[v], pickName: nm(ballots[v]), wheel, target: hits[(Math.random() * hits.length) | 0] };
   }
-  S.results[S.idx] = { prompt: S.prompts[S.idx], counts, names, winners, total: voters.length, dd: ddCount, oracles: S.opts.oracle ? oracles : [], snitch, defend: null };
+  S.results[S.idx] = { prompt: S.prompts[S.idx], counts, names, winners, total: voters.length, dd: ddCount, oracles: S.opts.oracle ? oracles : [], snitch: null, defend: null };
+  if (snitch) snitchNext[S.idx] = snitch; else delete snitchNext[S.idx];
+  if (authorsAll[S.idx]) S.authors[S.idx] = authorsAll[S.idx];
   const speed = {};
   for (const k of voters) if (firstVoteAt.has(k)) speed[k] = firstVoteAt.get(k);
   history[S.idx] = { ballots, dd: ddUsed, preds: predObj, speed, flips: Object.fromEntries(flips), present: S.roster.map(r => r.key), jury: {} };
   S.phase = "reveal"; ballot = null;
-  commit();
+  commit(); sendAllDD();
 }
 function trialPlanned() {
   const r = S.results[S.idx];
@@ -1039,7 +1120,7 @@ function trialPlanned() {
 function afterReveal() {
   if (S.phase !== "reveal") return;
   const r = S.results[S.idx];
-  if (r && r.snitch) { S.phase = "snitch"; commit(); }
+  if (r && snitchNext[S.idx]) { r.snitch = snitchNext[S.idx]; delete snitchNext[S.idx]; S.phase = "snitch"; commit(); }
   else if (trialPlanned()) startTrial();
   else { S.phase = "board"; commit(); }
 }
@@ -1060,7 +1141,7 @@ function endTrial() {
   let g = 0, a = 0;
   for (const [k, v] of jury) { if (k === S.defend.key || !S.roster.some(r => r.key === k)) continue; if (v === "g") g++; else a++; }
   S.defend.guilty = g; S.defend.acquit = a;
-  S.defend.verdict = g > a ? "guilty" : "acquitted";
+  S.defend.verdict = g + a === 0 ? "hung" : g > a ? "guilty" : "acquitted";
   S.results[S.idx].defend = { key: S.defend.key, name: S.defend.name, verdict: S.defend.verdict, guilty: g, acquit: a };
   if (history[S.idx]) history[S.idx].jury = Object.fromEntries([...jury].filter(([k]) => k !== S.defend.key));
   commit();
@@ -1077,10 +1158,12 @@ function nextAward() {
 function closeWriteins() {
   if (S.phase !== "writein") return;
   const nameOf = k => (S.roster.find(r => r.key === k) || {}).name;
+  const seen = new Set(S.prompts.map(p => p.toLowerCase()));
   for (const [k, text] of shuffle([...writeins])) {
-    if (!nameOf(k) || !text) continue;
+    if (!nameOf(k) || !text || seen.has(text.toLowerCase()) || S.prompts.length >= 120) continue;
+    seen.add(text.toLowerCase());
     S.prompts.push(text);
-    S.authors[S.prompts.length - 1] = nameOf(k);
+    authorsAll[S.prompts.length - 1] = nameOf(k); S.wi.push(S.prompts.length - 1);
   }
   writeins.clear(); S.writeDone = true; S.writeCount = 0;
   S.phase = "board";
@@ -1138,7 +1221,7 @@ function hostAdvance() {
     case "vote": doReveal(); break;
     case "reveal": afterReveal(); break;
     case "snitch": afterSnitch(); break;
-    case "defend": if (!S.defend || S.defend.verdict) { S.defend = null; S.phase = "board"; commit(); } else endTrial(); break;
+    case "defend": if (!S.defend || S.defend.verdict) { S.defend = null; S.phase = "board"; commit(); } else if (Date.now() >= (S.defend.startsAt || 0) + 8000 || S.paused) endTrial(); break;
     case "board": nextAward(); break;
     case "writein": closeWriteins(); break;
     case "finale": nextFinale(); break;
@@ -1150,7 +1233,7 @@ function nextLabel() {
     case "setup": return "Start the awards";
     case "rules": return "Let's go";
     case "vote": return "Reveal the winner";
-    case "reveal": { const r = S.results[S.idx]; return r && r.snitch || trialPlanned() ? "Continue" : "Show the leaderboard"; }
+    case "reveal": return (mode === "host" ? snitchNext[S.idx] : S.results[S.idx] && S.results[S.idx].snitch) || trialPlanned() ? "Continue" : "Show the leaderboard";
     case "snitch": return trialPlanned() ? "Continue" : "Show the leaderboard";
     case "defend": return S.defend && !S.defend.verdict ? "Call the verdict now" : "Show the leaderboard";
     case "board": return S.idx === S.writeAt && !S.writeDone ? "Write-in time" : S.idx >= S.prompts.length - 1 ? "On to the finale" : "Next award";
@@ -1164,14 +1247,19 @@ function addPerson(name) {
   if (!name || S.roster.length >= 60) return;
   const key = "x:" + rid();
   S.roster.push({ key, name: uniqueName(name, key) });
-  if (S.phase !== "setup") S.ddLeft[key] = S.ddPer;
+  if (S.phase !== "setup") ddLeft[key] = S.ddPer;
   commit();
 }
 function removePerson(key) {
   S.roster = S.roster.filter(r => r.key !== key);
   if (!key.startsWith("x:") && !S.hidden.includes(key)) S.hidden.push(key);
   if (S.cohost === key) S.cohost = null;
-  for (const [v, p] of [...votes]) if (v === key || p.pick === key) votes.delete(v);
+  for (const [v, p] of [...votes]) if (v === key || p.pick === key) {
+    votes.delete(v);
+    if (p.pick === key) for (const c of conns.values()) if (c.key === v) tell(c.conn, { t: "nack", why: "nominee-gone", g: S.gameId, r: S.idx });
+  }
+  writeins.delete(key); S.writeCount = writeins.size;
+  if (S.phase === "defend" && S.defend && S.defend.key === key && !S.defend.verdict) { S.defend.verdict = "hung"; S.results[S.idx].defend = { key, name: S.defend.name, verdict: "hung", guilty: 0, acquit: 0 }; }
   for (const [v, p] of [...preds]) if (v === key || p === key) preds.delete(v);
   jury.delete(key);
   recomputeOnline();
@@ -1191,7 +1279,7 @@ function standings(upto) {
     for (const [k, n] of Object.entries(r.counts || {})) { const e = m.get(k); if (e) e.votes += (+n || 0); }
     (r.winners || []).forEach(w => { const e = m.get(w.key); if (e) e.wins += 1; });
     (r.oracles || []).forEach(k => { const e = m.get(k); if (e) e.oracle += 1; });
-    if (r.defend) { const e = m.get(r.defend.key); if (e) e.court += r.defend.verdict === "guilty" ? PTS_GUILTY : PTS_ACQUIT; }
+    if (r.defend && r.defend.verdict !== "hung") { const e = m.get(r.defend.key); if (e) e.court += r.defend.verdict === "guilty" ? PTS_GUILTY : PTS_ACQUIT; }
   });
   const arr = [...m.values()];
   arr.forEach(e => { e.pts = e.votes + PTS_WIN * e.wins + PTS_ORACLE * e.oracle + e.court; });
@@ -1281,6 +1369,8 @@ function computeMeta() {
     const pure = (a, b) => { let bk = null, bv = 0; for (const [k, n] of Object.entries(a)) if (!b[k] && n > bv) { bk = k; bv = n; } return bk ? [bk, bv] : null; };
     if ((t = pure(hang, soft)) && t[1] >= Math.min(2, trials)) add("🪢", "The Hanging Judge", [t[0]], `Voted guilty in ${plural(t[1], "trial")}, never once let anyone off.`);
     if ((t = pure(soft, hang)) && t[1] >= Math.min(2, trials)) add("🧸", "The Softie", [t[0]], `Voted not guilty in ${plural(t[1], "trial")}. Would acquit a raccoon caught in the pie.`);
+    const winners = new Set(); S.results.forEach(r => r && r.winners.forEach(w => winners.add(w.key)));
+    for (const k of Object.keys(bride)) if (winners.has(k)) delete bride[k];
     if ((t = top(bride)) && t[1] >= 2) add("🥈", "The Bridesmaid", [t[0]], `Came second ${t[1]} times. Always close, never the winner.`);
     // Backfired: wrote an award and then won it
     const bf = [];
@@ -1296,6 +1386,7 @@ function computeMeta() {
       if (bk && bv >= 2) add("📈", "Comeback Kid", [bk], `Climbed ${bv} places from #${worst[bk]} to #${finalRank.get(bk)}. Never count them out.`);
     }
   }
+  if (rounds < 3) return [];
   const result = shuffle(out).slice(0, 7);
   if ((t = top(pair))) { const [a, b] = t[0].split("|"); result.push({ emoji: "⚔️", title: "The Grudge", who: `${nameOf(a)} ⚔️ ${nameOf(b)}`, line: `${t[1]} votes fired at each other tonight. Settle it outside.`, keys: [a, b] }); }
   return result;
@@ -1342,7 +1433,7 @@ function castVote(pick) {
 }
 function toggleDD() {
   const cur = currentVote();
-  if (!cur || (S.ddLeft[myKey] || 0) <= 0) return;
+  if (!cur || (myDD <= 0 && !cur.dd)) return;
   cur.dd = !cur.dd; myVote = cur;
   LS.set("fsg.vote", JSON.stringify(myVote));
   sendVote(myVote); renderDynamic();
@@ -1354,7 +1445,7 @@ function castPred(pick) {
 }
 function castJury(v) {
   if (!S.defend || S.defend.verdict || S.defend.key === myKey) return;
-  myJury = { g: S.gameId, r: S.idx, v };
+  myJury = { g: S.gameId, r: S.idx, v }; LS.set("fsg.jury", JSON.stringify(myJury));
   send({ t: "jury", g: S.gameId, r: S.idx, v });
   renderDynamic();
 }
@@ -1376,6 +1467,7 @@ function render() {
     try { window.scrollTo(0, 0); } catch (e) {}
     document.documentElement.classList.toggle("host-mode", mode === "host");
     build();
+    if (mode === "host" && !firstBuild) lock(800);
     firstBuild = false;
     const wait = Math.max(0, lockUntil - Date.now());
     setTimeout(() => document.querySelectorAll(".intro, .animate, .animate-board, .chaos-run").forEach(el => el.classList.add("ready")), wait);
@@ -1410,8 +1502,9 @@ function winnerText(r) {
 function winnerHTML(r) {
   const tie = r && r.winners.length > 1;
   if (!r || !r.winners.length) return `<p class="winner none after">No winner</p>`;
-  return `<p class="winner after ${tie ? "tie" : ""}">${tie ? r.winners.map((w, i) => `<span class="tn">${esc(w.name)}${i < r.winners.length - 1 ? " &amp;" : ""}</span>`).join("") : esc(r.winners[0].name)}</p>`;
+  return `<p class="winner after ${tie ? "tie" : longCls(r.winners[0].name)}">${tie ? r.winners.map((w, i) => `<span class="tn">${esc(w.name)}${i < r.winners.length - 1 ? " &amp;" : ""}</span>`).join("") : esc(r.winners[0].name)}</p>`;
 }
+const longCls = n => String(n || "").length > 14 ? "long" : "";
 function animating() { return !firstBuild && !reduceMotion; }
 function lock(ms) { lockUntil = Math.max(lockUntil, Date.now() + ms); }
 
@@ -1583,8 +1676,8 @@ function buildVote() {
     <main class="stage ${animate ? "intro" : ""}" style="--qd:${w.end.toFixed(2)}s">
       ${topbarHTML(awardLabel())}
       <div class="center">
-        <p class="q-eyebrow">${S.authors[S.idx] ? "✍️ Write-in" : `Award #${S.idx + 1}`}</p>
-        <h1 class="prompt">${w.html}</h1>
+        <p class="q-eyebrow">${S.wi.includes(S.idx) ? "✍️ Write-in" : `Award #${S.idx + 1}`}</p>
+        <h1 class="prompt ${(S.prompts[S.idx] || "").length > 80 ? "long" : ""}">${w.html}</h1>
         <div class="tally after-q"><span id="vcount" class="big-num">0</span><span>of <span id="vtotal">0</span> votes in</span></div>
         <ul id="voters" class="chips voters after-q" aria-label="Who has voted"></ul>
         ${bonus ? `<p class="fine after-q">${bonus}</p>` : ""}
@@ -1600,7 +1693,7 @@ function buildVote() {
 }
 
 function barsHTML(r) {
-  const entries = Object.entries(r.counts || {}).map(([k, n]) => ({ k, n: +n || 0, name: (r.names && r.names[k]) || "Someone" })).filter(e => e.n > 0).sort((a, b) => b.n - a.n).slice(0, 8);
+  const entries = Object.entries(r.counts || {}).map(([k, n]) => ({ k, n: +n || 0, name: (r.names && r.names[k]) || "Someone" })).filter(e => e.n > 0).sort((a, b) => b.n - a.n).slice(0, window.innerHeight < 800 ? 5 : 8);
   if (!entries.length) return "";
   const max = entries[0].n;
   return `<ul class="bars">${entries.map(e => `
@@ -1679,6 +1772,8 @@ function buildSnitch() {
       ${animate ? chaosCard("🎰", "Snitch Roulette", "The wheel picks one voter. Their vote goes on the big screen. No take-backs.") : ""}
     </main>`;
   const canvas = document.getElementById("wheel");
+  const px = Math.round(Math.max(300, canvas.clientWidth) * (window.devicePixelRatio || 1));
+  canvas.width = px; canvas.height = px;
   const show = () => { const el = document.getElementById("snitchResult"); if (el) el.classList.add("show"); const nx = document.getElementById("snitchNext"); if (nx) nx.classList.add("show"); sfx("snitch"); };
   if (animate) {
     drawWheel(canvas, sn.wheel, 0);
@@ -1689,23 +1784,25 @@ const WHEEL_COLORS = ["#a066ff", "#ff8c42", "#ffd23f", "#f4e4c1", "#6b3fc4", "#e
 function wheelAngle(n, target) { const seg = 2 * Math.PI / n; return ((-Math.PI / 2 - (target + .5) * seg) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI); }
 function drawWheel(canvas, names, rot) {
   const ctx = canvas && canvas.getContext("2d"); if (!ctx) return;
-  const W = canvas.width, R = W / 2 - 8, n = Math.max(1, names.length), seg = 2 * Math.PI / n;
+  const W = canvas.width, k = W / 460, R = W / 2 - 8 * k, n = Math.max(1, names.length), seg = 2 * Math.PI / n;
   ctx.clearRect(0, 0, W, W);
   ctx.save(); ctx.translate(W / 2, W / 2); ctx.rotate(rot);
   for (let i = 0; i < n; i++) {
     ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, i * seg, (i + 1) * seg); ctx.closePath();
     ctx.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length]; ctx.fill();
-    ctx.strokeStyle = "#140a22"; ctx.lineWidth = 3; ctx.stroke();
-    ctx.save(); ctx.rotate((i + .5) * seg); ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.strokeStyle = "#140a22"; ctx.lineWidth = 3 * k; ctx.stroke();
+    const mid = (i + .5) * seg, abs = ((rot + mid) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+    const flip = abs > Math.PI / 2 && abs < 3 * Math.PI / 2;
+    ctx.save(); ctx.rotate(mid + (flip ? Math.PI : 0)); ctx.textBaseline = "middle"; ctx.textAlign = "center";
     ctx.fillStyle = [2, 3].includes(i % WHEEL_COLORS.length) ? "#1a0b2c" : "#fff8ea";
-    ctx.font = `700 ${n > 10 ? 16 : 20}px Outfit, system-ui, sans-serif`;
-    const label = names[i].length > 14 ? names[i].slice(0, 13) + "…" : names[i];
-    ctx.fillText(label, R - 16, 0); ctx.restore();
+    ctx.font = `700 ${Math.round((n > 10 ? 18 : 22) * k)}px Outfit, system-ui, sans-serif`;
+    const label = names[i].length > 12 ? names[i].slice(0, 11) + "…" : names[i];
+    ctx.fillText(label, (flip ? -1 : 1) * R * .6, 0); ctx.restore();
   }
   ctx.restore();
-  ctx.beginPath(); ctx.arc(W / 2, W / 2, 30, 0, 2 * Math.PI); ctx.fillStyle = "#140a22"; ctx.fill();
-  ctx.lineWidth = 5; ctx.strokeStyle = "#ffd23f"; ctx.stroke();
-  ctx.beginPath(); ctx.arc(W / 2, W / 2, R + 4, 0, 2 * Math.PI); ctx.lineWidth = 6; ctx.strokeStyle = "#ffd23f"; ctx.stroke();
+  ctx.beginPath(); ctx.arc(W / 2, W / 2, 30 * k, 0, 2 * Math.PI); ctx.fillStyle = "#140a22"; ctx.fill();
+  ctx.lineWidth = 5 * k; ctx.strokeStyle = "#ffd23f"; ctx.stroke();
+  ctx.beginPath(); ctx.arc(W / 2, W / 2, R + 4 * k, 0, 2 * Math.PI); ctx.lineWidth = 6 * k; ctx.strokeStyle = "#ffd23f"; ctx.stroke();
 }
 function spinWheel(canvas, names, target, dur, done) {
   const n = names.length, seg = 2 * Math.PI / n;
@@ -1744,6 +1841,7 @@ function updateTimers() {
 }
 function verdictHTML(isHost) {
   const d = S.defend;
+  if (d.verdict === "hung") return `<p class="stamp acquit">MISTRIAL</p><p class="${isHost ? "prompt small" : "fine"} after">Nobody voted. ${esc(d.name)} gets off on a technicality. No points.</p>`;
   const g = d.verdict === "guilty";
   const pts = g ? `+${PTS_GUILTY}` : `${PTS_ACQUIT}`;
   return `
@@ -1771,7 +1869,7 @@ function buildDefend() {
       ${topbarHTML(awardLabel())}
       <div class="center trial">
         <p class="q-eyebrow">⚖️ Defend yourself</p>
-        <p class="winner">${esc(d.name)}</p>
+        <p class="winner ${longCls(d.name)}">${esc(d.name)}</p>
         <p class="prompt small">stands accused of “${esc(r ? r.prompt : "")}”</p>
         ${ringHTML()}
         <p class="fine">Make your case, ${esc(d.name)}. Everyone else: vote <b>Guilty</b> or <b>Not guilty</b> on your phone.</p>
@@ -1824,7 +1922,7 @@ function lbHTML(cur, prev, opts) {
 }
 function hostRows() {
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-  return Math.max(3, Math.min(10, Math.floor((window.innerHeight - 15 * rem) / (3.6 * rem))));
+  return Math.max(3, Math.min(10, Math.floor((window.innerHeight - 15 * rem) / (4.1 * rem))));
 }
 function settleBars(root, animate) {
   const go = () => root.querySelectorAll(".lb .fill[data-to]").forEach(f => { f.style.width = f.dataset.to + "%"; });
@@ -1865,7 +1963,7 @@ function buildFinale() {
         <p class="q-eyebrow">${last ? "And finally…" : "Special award"}</p>
         <p class="meta-emoji">${esc(m.emoji)}</p>
         <h1 class="meta-title">${esc(m.title)}</h1>
-        <p class="winner ${m.keys.length > 1 ? "tie" : ""}">${esc(m.who)}</p>
+        <p class="winner ${m.keys.length > 1 ? "tie" : longCls(m.who)}">${esc(m.who)}</p>
         <p class="prompt small">${esc(m.line)}</p>
       </div>
       <div class="actions">${nextBtn()}</div>
@@ -1880,7 +1978,7 @@ function doneInner(isHost) {
   const champs = anyPts ? fin.filter(e => e.rank === 1) : [];
   const listHTML = rows.length ? `<ol class="awards-list">${rows.map(({ p, r }, i) => {
     const wt = winnerText(r);
-    const tags = r ? [r.defend ? (r.defend.verdict === "guilty" ? "⚖️ guilty" : "⚖️ acquitted") : "", r.snitch ? `🎰 ${esc(r.snitch.voterName)} snitched on` : "", S.authors[i] ? `✍️ by ${esc(S.authors[i])}` : ""].filter(Boolean).join(" · ") : "";
+    const tags = r ? [r.defend ? (r.defend.verdict === "guilty" ? "⚖️ guilty" : r.defend.verdict === "hung" ? "⚖️ mistrial" : "⚖️ acquitted") : "", r.snitch ? `🎰 ${esc(r.snitch.voterName)}'s vote exposed` : "", S.authors[i] ? `✍️ by ${esc(S.authors[i])}` : ""].filter(Boolean).join(" · ") : "";
     return `<li><span>${esc(p)}${tags ? `<small class="tags">${tags}</small>` : ""}</span><span class="who ${wt ? "" : "none"}">${wt ? esc(wt) : (r ? "No votes" : "Skipped")}</span></li>`;
   }).join("")}</ol>` : `<p class="empty">No awards were handed out.</p>`;
   const champHTML = champs.length ? `<div class="champ"><p class="q-eyebrow">Friendsgiving ${YEAR} champion${champs.length > 1 ? "s" : ""}</p><p class="winner ${champs.length > 1 ? "tie" : ""}">${champs.map((c, i) => `<span class="tn">${esc(c.name)}${i < champs.length - 1 ? " &amp;" : ""}</span>`).join("")}</p></div>` : "";
@@ -1914,7 +2012,7 @@ function buildPlayer() {
   const head = `
     <header class="p-head">
       <span class="mark">Friendsgiving<br>Superlatives</span>
-      ${myName && !renaming ? `<button class="me" data-act="rename" title="Change your name">You: ${esc(myName)}</button>` : ""}
+      ${myName && !renaming ? (S.phase === "setup" || !stateSeen ? `<button class="me" data-act="rename" title="Change your name">You: ${esc(myName)}</button>` : `<span class="me">You: ${esc(myName)}</span>`) : ""}
     </header>`;
   let body = "";
   const note = `<div id="pnote"></div>`;
@@ -1961,7 +2059,7 @@ function buildPlayer() {
     const w = words(S.prompts[S.idx]);
     if (animate) lock(w.end * 1000 + 200);
     body = `<div class="p-body ${animate ? "intro" : ""}" style="--qd:${w.end.toFixed(2)}s">
-      <p class="q-eyebrow">${S.authors[S.idx] ? "✍️ Write-in · " : ""}Award #${S.idx + 1} of ${S.prompts.length}</p>
+      <p class="q-eyebrow">${S.wi.includes(S.idx) ? "✍️ Write-in · " : ""}Award #${S.idx + 1} of ${S.prompts.length}</p>
       <h1 class="p-prompt">${w.html}</h1>
       <div class="nominees after-q" id="nominees"></div>
       <div id="extras" class="after-q"></div>
@@ -1973,7 +2071,7 @@ function buildPlayer() {
     const meExposed = sn && sn.voter === myKey;
     body = `<div class="p-body mid ${animate ? "chaos-run" : "chaos-still"}">
       <p class="q-eyebrow">🎰 Snitch Roulette</p>
-      <h1 class="p-title">The wheel is spinning…</h1><p class="fine">Eyes on the TV. Somebody's vote is about to go public.</p>
+      <div class="spin-head"><h1 class="p-title">The wheel is spinning…</h1><p class="fine">Eyes on the TV. Somebody's vote is about to go public.</p></div>
       ${sn ? `<div class="snitch-result p-late"><p class="snitch-line"><span class="hl">${esc(sn.voterName)}</span> voted for <span class="hl">${esc(sn.pickName)}</span></p>${meExposed ? `<p class="pill">That's you. Busted.</p>` : ""}</div>` : ""}${note}</div>`;
   } else if (S.phase === "defend") {
     const d = S.defend;
@@ -1999,6 +2097,7 @@ function buildPlayer() {
     const text = cleanText(document.getElementById("writeInput").value, 100);
     const st = document.getElementById("writeStatus");
     if (text.length < 3) { if (st) st.textContent = "Write a little more than that."; return; }
+    if (/\S{26,}/.test(text)) { if (st) st.textContent = "Use real words, not one giant one."; return; }
     LS.set("fsg.write." + S.gameId, text);
     send({ t: "write", text });
     if (st) st.textContent = "Locked in. You can still edit it until the host closes write-ins.";
@@ -2101,14 +2200,14 @@ function renderDynamic() {
       if (ex) {
         let html = "";
         if (v && S.opts.dd) {
-          const left = S.ddLeft[myKey] || 0;
+          const left = myDD;
           html += `<button class="dd-toggle ${v.dd ? "on" : ""}" data-act="dd" ${left <= 0 && !v.dd ? "disabled" : ""} aria-pressed="${v.dd ? "true" : "false"}">
             <span>⚡ Double Down ${v.dd ? "ON" : "off"}</span><small>${left <= 0 ? "None left" : `${plural(left, "left")} · makes this vote count ×2`}</small></button>`;
         }
         if (v && S.opts.oracle) {
           const pp = myPred && myPred.g === S.gameId && myPred.r === S.idx ? myPred.pick : null;
           html += `<div class="oracle"><p class="oracle-head">🔮 Oracle bet: who'll actually win? <small>+${PTS_ORACLE} if you're right</small></p>
-            <div class="oracle-chips">${S.roster.map(r => `<button class="ochip ${pp === r.key ? "sel" : ""}" data-act="pred" data-key="${esc(r.key)}">${esc(r.name)}${r.key === myKey ? " (you)" : ""}</button>`).join("")}</div></div>`;
+            <div class="oracle-chips">${S.roster.filter(r => r.key !== myKey).map(r => `<button class="ochip ${pp === r.key ? "sel" : ""}" data-act="pred" data-key="${esc(r.key)}">${esc(r.name)}</button>`).join("")}</div></div>`;
         }
         ex.innerHTML = html;
       }
@@ -2130,7 +2229,9 @@ function renderPending() {
   if (!el) { el = document.createElement("div"); el.id = "pendingBar"; document.body.appendChild(el); }
   const show = mode === "host" && S.pending.length && S.phase !== "setup";
   el.className = show ? "pending-bar on" : "pending-bar";
-  el.innerHTML = show ? S.pending.slice(0, 3).map(p => `<div class="pend"><span><b>${esc(p.name)}</b> wants to join</span><button class="btn primary" data-act="admit" data-key="${esc(p.key)}">Let in</button><button class="btn ghost" data-act="deny" data-key="${esc(p.key)}">No</button></div>`).join("") : "";
+  const more = S.pending.length - 3 + pendingOverflow;
+  el.innerHTML = show ? S.pending.slice(0, 3).map(p => `<div class="pend"><span><b>${esc(p.name)}</b> wants to join</span><button class="btn primary" data-act="admit" data-key="${esc(p.key)}">Let in</button><button class="btn ghost" data-act="deny" data-key="${esc(p.key)}">No</button></div>`).join("")
+    + (more > 0 || S.pending.length > 1 ? `<div class="pend"><span>${more > 0 ? `+${more} more waiting` : "Several people waiting"}</span><button class="btn ghost" data-act="deny-all">Deny all</button></div>` : "") : "";
 }
 function renderPauseLayer() {
   let el = document.getElementById("pauseLayer");
@@ -2146,7 +2247,7 @@ function renderCohostBar() {
   el.className = show ? "cobar on" : "cobar";
   el.innerHTML = show ? `<span class="co-tag">👑 Co-host</span>
     ${S.phase !== "setup" ? `<button class="btn" data-act="co-pause">${S.paused ? "▶ Resume" : "⏸ Pause"}</button>` : ""}
-    <button class="btn primary" data-act="co-next">${esc(nextLabel())} ▶</button>` : "";
+    ${S.paused ? "" : `<button class="btn primary" data-act="co-next">${esc(nextLabel())} ▶</button>`}` : "";
   document.body.classList.toggle("has-cobar", show);
 }
 function renderBallot() {
@@ -2158,7 +2259,7 @@ function renderBallot() {
       <div class="ballot-top"><h2>Who's voting?</h2>
       <p class="fine">For people without a working phone. Pass the device around: tap your own name, then pick in secret. People with a phone connected vote on their phone.</p>
       <div><button class="btn" data-act="b-close">Done voting</button></div></div>
-      <div class="pick-grid">${S.roster.filter(r => !online.has(r.key)).map(r => `<button class="btn ${votes.has(r.key) ? "had" : ""}" data-act="b-who" data-key="${esc(r.key)}">${esc(r.name)}${votes.has(r.key) ? " ✓" : ""}</button>`).join("")}</div>
+      <div class="pick-grid">${S.roster.filter(r => r.key.startsWith("x:") || (!online.has(r.key) && !votes.has(r.key))).map(r => `<button class="btn ${votes.has(r.key) ? "had" : ""}" data-act="b-who" data-key="${esc(r.key)}">${esc(r.name)}${votes.has(r.key) ? " ✓" : ""}</button>`).join("")}</div>
     </div></div>`;
   } else if (ballot.step === "pick") {
     const voter = S.roster.find(r => r.key === ballot.voter);
@@ -2207,6 +2308,7 @@ document.addEventListener("click", e => {
     case "lock": S.locked = !S.locked; commit(); el.textContent = S.locked ? "🔒" : "🔓"; break;
     case "admit": if (key) admit(key, true); break;
     case "deny": if (key) admit(key, false); break;
+    case "deny-all": denyAll(); break;
     case "cohost": if (key) { S.cohost = S.cohost === key ? null : key; commit(); } break;
     case "reset-prompts": { promptText = DEFAULT_PROMPTS.join("\n"); LS.set("fsg.prompts", promptText); const ta = document.getElementById("prompts"); if (ta) ta.value = promptText; renderDynamic(); break; }
     case "skip": skipAward(); break;
@@ -2224,8 +2326,8 @@ document.addEventListener("click", e => {
       break;
     }
     case "ballot": ballot = { step: "who" }; renderBallot(); break;
-    case "b-who": if (online.has(key)) break; ballot = { step: "pick", voter: key }; renderBallot(); break;
-    case "b-pick": if (ballot && ballot.voter && key !== ballot.voter && S.roster.some(r => r.key === key) && S.phase === "vote") { const prev = votes.get(ballot.voter); votes.set(ballot.voter, { pick: key, dd: prev ? prev.dd : false }); saveHost(); ballot = { step: "done" }; renderDynamic(); } break;
+    case "b-who": { const v0 = votes.get(key); if (!key || (!key.startsWith("x:") && (online.has(key) || (v0 && !v0.tv)))) break; } ballot = { step: "pick", voter: key }; renderBallot(); break;
+    case "b-pick": if (ballot && ballot.voter && key !== ballot.voter && S.roster.some(r => r.key === key) && S.phase === "vote") { const prev = votes.get(ballot.voter); if (prev && !prev.tv) break; votes.set(ballot.voter, { pick: key, dd: false, tv: true }); saveHost(); ballot = { step: "done" }; renderDynamic(); } break;
     case "b-back": case "b-next": ballot = { step: "who" }; renderBallot(); break;
     case "b-close": ballot = null; renderBallot(); break;
     case "vote": if (key && S.phase === "vote") castVote(key); break;
@@ -2263,7 +2365,7 @@ function startHost() {
   mode = "host";
   restoreHost();
   const saved = cleanCode(LS.get("fsg.room")), savedAt = +LS.get("fsg.roomAt") || 0;
-  const resuming = saved && S.phase !== "done" && Date.now() - savedAt < 12 * 3600 * 1000 && (S.phase !== "setup" || S.roster.length);
+  const resuming = saved && Date.now() - savedAt < 12 * 3600 * 1000 && (S.phase !== "setup" || S.roster.length);
   if (!resuming) {
     const keepOpts = S.opts;
     S = blankState(); S.opts = keepOpts || defaultOpts();
