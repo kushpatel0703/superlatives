@@ -35,7 +35,7 @@ Anyone without a phone can be added by name on the host screen. **Vote on this s
 
 Scoring: 1 point per vote you get, +2 per award won, plus the Oracle and courtroom points above. Nobody can vote for themselves.
 
-At the end the game hands out awards worked out from how people voted: The Grudge, The Stalker, The Sheep, The Lone Wolf, The NPC, The Prophet, Repeat Offender, The Speedrunner and The Sloth. Every phone gets a yearbook card.
+At the end the game hands out awards worked out from how people voted: The Grudge, The Stalker, The Sheep, The Lone Wolf, The NPC, The Prophet, Repeat Offender, The Speedrunner, The Sloth, The Flip-Flopper, AFK, The Hanging Judge, The Softie, Backfired, Comeback Kid and The Bridesmaid (up to 8 per game, picked from whatever actually happened). Every phone gets a yearbook card.
 
 **Running the night:** press **P** or click Pause to freeze the game while people talk. Tap 👑 next to a phone player to make them co-host, which gives them Pause and Next buttons. After the game starts the room locks (🔒), so new arrivals need your OK to join.
 

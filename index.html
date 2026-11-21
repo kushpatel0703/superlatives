@@ -614,6 +614,7 @@ let lockUntil = 0;               // ignore advance clicks/keys while the next sc
 const votes = new Map();         // voter key -> {pick, dd}
 const preds = new Map();         // voter key -> predicted winner key
 const jury = new Map();          // voter key -> "g" | "a"
+const flips = new Map();        // voter key -> times they changed their vote this round
 const firstVoteAt = new Map();  // voter key -> ms from award shown to their first tap
 let roundStart = 0;
 const writeins = new Map();     // voter key -> their write-in text (secret until it is played)
@@ -801,6 +802,8 @@ function onHostData(conn, d) {
     if (!ok) { tell(conn, { t: "nack", why: "closed", g: d.g, r: d.r }); return; }
     const dd = !!d.dd && S.opts.dd && (S.ddLeft[entry.key] || 0) > 0;
     if (!firstVoteAt.has(entry.key) && roundStart) firstVoteAt.set(entry.key, Math.max(0, Date.now() - roundStart));
+    const before = votes.get(entry.key);
+    if (before && before.pick !== d.pick) flips.set(entry.key, (flips.get(entry.key) || 0) + 1);
     votes.set(entry.key, { pick: d.pick, dd });
     saveHost(); renderDynamic();
   } else if (d.t === "pred") {
@@ -939,7 +942,7 @@ function sanitizeCard(c) {
 let commitTimer = null;
 function saveHost() {
   LS.set("fsg.roomAt", String(Date.now()));
-  LS.set("fsg.host", JSON.stringify({ S, votes: [...votes], preds: [...preds], jury: [...jury], history, plan, secrets: [...secrets], writeins: [...writeins], firstVoteAt: [...firstVoteAt], roundStart }));
+  LS.set("fsg.host", JSON.stringify({ S, votes: [...votes], preds: [...preds], jury: [...jury], history, plan, secrets: [...secrets], writeins: [...writeins], firstVoteAt: [...firstVoteAt], flips: [...flips], roundStart }));
 }
 function restoreHost() {
   try {
@@ -950,11 +953,12 @@ function restoreHost() {
     pairs(d.votes, (k, v) => { if (v && typeof v === "object" && typeof v.pick === "string") votes.set(k, { pick: v.pick, dd: !!v.dd }); });
     pairs(d.preds, (k, v) => { if (typeof v === "string") preds.set(k, v); });
     pairs(d.jury, (k, v) => { if (v === "g" || v === "a") jury.set(k, v); });
+    pairs(d.flips, (k, v) => { if (typeof v === "number") flips.set(k, v); });
     pairs(d.firstVoteAt, (k, v) => { if (typeof v === "number") firstVoteAt.set(k, v); });
     if (typeof d.roundStart === "number") roundStart = d.roundStart;
     pairs(d.writeins, (k, v) => { if (typeof v === "string") writeins.set(k, cleanText(v, 100)); });
     pairs(d.secrets, (k, v) => { if (typeof v === "string") secrets.set(k, v); });
-    if (Array.isArray(d.history)) history = d.history.map(h => h && typeof h === "object" ? { ballots: h.ballots || {}, dd: h.dd || {}, preds: h.preds || {}, speed: h.speed || {} } : null);
+    if (Array.isArray(d.history)) history = d.history.map(h => h && typeof h === "object" ? { ballots: h.ballots || {}, dd: h.dd || {}, preds: h.preds || {}, speed: h.speed || {}, flips: h.flips || {}, present: Array.isArray(h.present) ? h.present : [], jury: h.jury || {} } : null);
     if (d.plan && Array.isArray(d.plan.snitch) && Array.isArray(d.plan.defend)) plan = { snitch: d.plan.snitch.filter(Number.isInteger), defend: d.plan.defend.filter(Number.isInteger) };
   } catch (e) {}
 }
@@ -988,7 +992,7 @@ function startGame() {
   history = []; votes.clear(); preds.clear(); jury.clear(); ballot = null;
   commit();
 }
-function startClock() { firstVoteAt.clear(); roundStart = Date.now(); }
+function startClock() { firstVoteAt.clear(); flips.clear(); roundStart = Date.now(); }
 function beginVoting() { if (S.phase !== "rules") return; S.phase = "vote"; S.idx = 0; votes.clear(); preds.clear(); startClock(); commit(); }
 
 function doReveal() {
@@ -1024,7 +1028,7 @@ function doReveal() {
   S.results[S.idx] = { prompt: S.prompts[S.idx], counts, names, winners, total: voters.length, dd: ddCount, oracles: S.opts.oracle ? oracles : [], snitch, defend: null };
   const speed = {};
   for (const k of voters) if (firstVoteAt.has(k)) speed[k] = firstVoteAt.get(k);
-  history[S.idx] = { ballots, dd: ddUsed, preds: predObj, speed };
+  history[S.idx] = { ballots, dd: ddUsed, preds: predObj, speed, flips: Object.fromEntries(flips), present: S.roster.map(r => r.key), jury: {} };
   S.phase = "reveal"; ballot = null;
   commit();
 }
@@ -1058,6 +1062,7 @@ function endTrial() {
   S.defend.guilty = g; S.defend.acquit = a;
   S.defend.verdict = g > a ? "guilty" : "acquitted";
   S.results[S.idx].defend = { key: S.defend.key, name: S.defend.name, verdict: S.defend.verdict, guilty: g, acquit: a };
+  if (history[S.idx]) history[S.idx].jury = Object.fromEntries([...jury].filter(([k]) => k !== S.defend.key));
   commit();
 }
 function nextAward() {
@@ -1257,7 +1262,41 @@ function computeMeta() {
   }
   if ((t = top(prophet))) add("🔮", "The Prophet", [t[0]], `Called ${plural(t[1], "winner")} before the reveal. Who told them?`);
   if ((t = top(guilty))) add("⚖️", "Repeat Offender", [t[0]], `Found guilty ${plural(t[1], "time")}. The court has seen enough.`);
-  const result = shuffle(out).slice(0, 6);
+  {
+    const flipT = {}, missed = {}, hang = {}, soft = {}, bride = {};
+    let trials = 0;
+    S.results.forEach((res, i) => {
+      const h = history[i];
+      if (!res || !h) return;
+      for (const [k, n] of Object.entries(h.flips || {})) if (nameOf(k)) flipT[k] = (flipT[k] || 0) + n;
+      (h.present || []).forEach(k => { if (nameOf(k) && !(k in (h.ballots || {}))) missed[k] = (missed[k] || 0) + 1; });
+      const jv = Object.entries(h.jury || {});
+      if (jv.length) trials += 1;
+      jv.forEach(([k, v]) => { if (!nameOf(k)) return; const o = v === "g" ? hang : soft; o[k] = (o[k] || 0) + 1; });
+      const vals = [...new Set(Object.values(res.counts || {}))].sort((a, b) => b - a);
+      if (vals.length >= 2) for (const [k, n] of Object.entries(res.counts)) if (n === vals[1] && nameOf(k)) bride[k] = (bride[k] || 0) + 1;
+    });
+    if ((t = top(flipT)) && t[1] >= 2) add("🔁", "The Flip-Flopper", [t[0]], `Changed their vote ${t[1]} times. Commitment issues.`);
+    if ((t = top(missed)) && t[1] >= 2) add("📵", "AFK", [t[0]], `Missed ${t[1]} votes entirely. Were they even here?`);
+    const pure = (a, b) => { let bk = null, bv = 0; for (const [k, n] of Object.entries(a)) if (!b[k] && n > bv) { bk = k; bv = n; } return bk ? [bk, bv] : null; };
+    if ((t = pure(hang, soft)) && t[1] >= Math.min(2, trials)) add("🪢", "The Hanging Judge", [t[0]], `Voted guilty in ${plural(t[1], "trial")}, never once let anyone off.`);
+    if ((t = pure(soft, hang)) && t[1] >= Math.min(2, trials)) add("🧸", "The Softie", [t[0]], `Voted not guilty in ${plural(t[1], "trial")}. Would acquit a raccoon caught in the pie.`);
+    if ((t = top(bride)) && t[1] >= 2) add("🥈", "The Bridesmaid", [t[0]], `Came second ${t[1]} times. Always close, never the winner.`);
+    // Backfired: wrote an award and then won it
+    const bf = [];
+    S.results.forEach((res, i) => { const a = S.authors[i]; if (res && a && res.winners.some(w => w.name === a)) bf.push([res.winners.find(w => w.name === a).key, res.prompt]); });
+    if (bf.length) add("🔙", "Backfired", [bf[0][0]], `Wrote “${bf[0][1]}” and then won it. Self-own of the year.`);
+    // Comeback Kid: biggest climb from their lowest rank to the final standings
+    if (rounds >= 3) {
+      const finalRank = new Map(standings(S.results.length - 1).map(e => [e.key, e.rank]));
+      const worst = {};
+      for (let i = 0; i < S.results.length - 1; i++) standings(i).forEach(e => { worst[e.key] = Math.max(worst[e.key] || 0, e.rank); });
+      let bk = null, bv = 0;
+      for (const [k, w] of Object.entries(worst)) { const climb = w - (finalRank.get(k) || w); if (climb > bv && nameOf(k)) { bk = k; bv = climb; } }
+      if (bk && bv >= 2) add("📈", "Comeback Kid", [bk], `Climbed ${bv} places from #${worst[bk]} to #${finalRank.get(bk)}. Never count them out.`);
+    }
+  }
+  const result = shuffle(out).slice(0, 7);
   if ((t = top(pair))) { const [a, b] = t[0].split("|"); result.push({ emoji: "⚔️", title: "The Grudge", who: `${nameOf(a)} ⚔️ ${nameOf(b)}`, line: `${t[1]} votes fired at each other tonight. Settle it outside.`, keys: [a, b] }); }
   return result;
 }
