@@ -31,11 +31,13 @@ Anyone without a phone can be added by name on the host screen. **Vote on this s
 - **⚖️ Defend Yourself:** some winners get 30 seconds to plead their case. The table votes on their phones: guilty +2, acquitted −1.
 - **⚡ Double Down:** each player gets one ×2 vote per 7 awards.
 - **🔮 Oracle Bets:** after voting, guess the winner. +1 if you're right.
-- **✍️ Write-ins:** halfway through, everyone writes one award. They're added to the end, and the author is revealed.
+- **✍️ Write-ins:** halfway through, everyone writes one award. A few random picks (4 by default, adjustable) are added to the end, and the author is revealed.
 
 Scoring: 1 point per vote you get, +2 per award won, plus the Oracle and courtroom points above. Nobody can vote for themselves.
 
 At the end the game hands out awards worked out from how people voted: The Grudge, The Stalker, The Sheep, The Lone Wolf, The NPC, The Prophet, Repeat Offender, The Speedrunner, The Sloth, The Flip-Flopper, AFK, The Hanging Judge, The Softie, Backfired, Comeback Kid and The Bridesmaid (up to 8 per game, picked from whatever actually happened). Every phone gets a yearbook card.
+
+**Leaderboard:** by default it shows every few awards, plus whenever the lead changes or chaos strikes. You can switch it to every award on the setup screen. The night ends with a champion podium.
 
 **Running the night:** press **P** or click Pause to freeze the game while people talk. Tap 👑 next to a phone player to make them co-host, which gives them Pause and Next buttons. After the game starts the room locks (🔒), so new arrivals need your OK to join.
 

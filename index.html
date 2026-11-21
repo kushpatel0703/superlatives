@@ -555,6 +555,46 @@ body.has-cobar .vote-bar { bottom: 5.5rem; }
 .meta-list li { align-content: start; align-items: start; }
 .lb .nm { justify-content: flex-start; }
 @media (prefers-reduced-motion: reduce) { .spin-head { display: none; } }
+
+/* ================= QA round 3: playtest polish ================= */
+.chaos-card { animation: chaosIn .4s cubic-bezier(.2,1.4,.4,1) both, chaosOut .3s ease 1.5s forwards; }
+.chaos-run .center, .chaos-run > .actions { animation: rise .5s ease 1.7s both; }
+.p-late { animation: rise .5s ease 6.2s forwards; }
+.spin-head { animation: spinGone .3s ease 6s forwards; }
+.verdict-name { font-family: var(--display); font-size: clamp(1.6rem, 4vw, 3rem); color: var(--ink); text-shadow: 3px 3px 0 var(--purple); overflow-wrap: anywhere; }
+.animate .verdict-name { animation: rise .4s ease both; }
+.animate .after-v { animation: rise .5s ease .6s both; }
+.jury-key { text-align: center; }
+.snitch-quip { font-family: var(--display); color: var(--orange); font-size: clamp(1.1rem, 2.4vw, 1.8rem); }
+.lb li.more { display: block; text-align: center; color: var(--muted); padding: .35rem; box-shadow: none; border-style: dashed; }
+.oracle-toggle { width: 100%; padding: .85rem 1rem; border-radius: 16px; border: 2px dashed var(--purple); background: rgba(160,102,255,.08); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
+.oracle-toggle b { color: var(--gold); }
+#extras { padding-bottom: .5rem; }
+.btn.primary.pulse { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { transform: scale(1.06); box-shadow: 6px 6px 0 var(--orange), 11px 11px 0 var(--purple), 0 0 30px rgba(255,210,63,.55); } }
+.sel-opt { grid-template-columns: auto 1fr; }
+.sel-opt > span:first-child { font-size: 1.2rem; }
+.sel-opt select { margin-top: .45rem; width: 100%; }
+/* podium */
+.podium { display: grid; grid-template-columns: 1fr 1.25fr 1fr; align-items: end; gap: 1rem; width: min(60rem, 100%); }
+.pod { display: grid; gap: .35rem; justify-items: center; text-align: center; padding: 1.1rem .8rem 1.3rem; border-radius: 18px 18px 6px 6px; border: 2px solid var(--line); background: rgba(33,18,58,.92); box-shadow: 6px 6px 0 rgba(160,102,255,.25); }
+.pod.p1 { order: 2; min-height: 16rem; border-color: var(--gold); box-shadow: 6px 6px 0 var(--orange), 12px 12px 0 var(--purple); }
+.pod.p2 { order: 1; min-height: 11rem; }
+.pod.p3 { order: 3; min-height: 8rem; }
+.pod-label { font-size: .85rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; color: var(--orange); }
+.pod-name { font-family: var(--display); font-size: clamp(1.4rem, 3vw, 2.4rem); line-height: 1.05; overflow-wrap: anywhere; }
+.pod.p1 .pod-name { font-size: clamp(2.2rem, 6vw, 5rem); }
+.pod-pts { color: var(--muted); font-weight: 600; }
+.animate-pod .pod.p3 { animation: rise .6s cubic-bezier(.2,1.4,.4,1) .6s both; }
+.animate-pod .pod.p2 { animation: rise .6s cubic-bezier(.2,1.4,.4,1) 2s both; }
+.animate-pod .pod.p1 { animation: slamUp .8s cubic-bezier(.2,1.5,.4,1) 3.6s both; }
+.animate-pod .pod-next { animation: rise .4s ease 4.6s both; }
+@keyframes slamUp { from { opacity: 0; transform: translateY(60px) scale(.6); } to { opacity: 1; transform: none; } }
+.podium.small { grid-template-columns: 1fr; width: 100%; }
+.podium.small .pod { order: 0; min-height: 0; }
+.podium.small .pod.p1 { order: -1; }
+@media (max-width: 700px) { .podium { grid-template-columns: 1fr; } .pod { min-height: 0 !important; order: 0 !important; } .pod.p1 { order: -1 !important; } }
+@media (prefers-reduced-motion: reduce) { .btn.primary.pulse { animation: none; outline: 3px solid var(--gold); } }
 </style>
 </head>
 <body>
@@ -599,8 +639,8 @@ const PTS_WIN = 2, PTS_ORACLE = 1, PTS_GUILTY = 2, PTS_ACQUIT = -1;
 const DEFEND_SECS = 30;
 const DD_EVERY = 7;            // one Double Down per 7 awards (minimum 1)
 const CHAOS_EVERY = 4;         // roughly one Snitch / one Trial per 4 awards
-const CARD_MS = 2600;          // chaos intro card on screen
-const SPIN_MS = 4800;          // roulette spin
+const CARD_MS = 1800;          // chaos intro card on screen
+const SPIN_MS = 4000;          // roulette spin
 
 const app = document.getElementById("app");
 const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -631,18 +671,19 @@ const myKey = "u:" + pid;
 /* ================= State =================
    S is public: the host broadcasts all of it to every phone.
    Who-voted-for-whom never goes in S (except the one vote Snitch Roulette exposes). */
-function defaultOpts() { return { snitch: true, defend: true, dd: true, oracle: true, writein: true }; }
+function defaultOpts() { return { snitch: true, defend: true, dd: true, oracle: true, writein: true, board: "smart", wcap: 4 }; }
 function blankState() {
   return { gameId: rid(), phase: "setup", idx: 0, prompts: [], roster: [], hidden: [], results: [], ts: 0,
-           cohost: null, paused: false, locked: false, pending: [], opts: defaultOpts(), ddPer: 0, defend: null, meta: [], fin: 0, hostNow: 0, authors: {}, wi: [], writeAt: -1, writeDone: false, writeCount: 0 };
+           cohost: null, paused: false, locked: false, pending: [], opts: defaultOpts(), ddPer: 0, defend: null, meta: [], fin: 0, hostNow: 0, authors: {}, wi: [], writers: [], writeEnds: 0, podium: 0, writeAt: -1, writeDone: false, writeCount: 0 };
 }
-const PHASES = ["setup", "rules", "writein", "vote", "reveal", "snitch", "defend", "board", "finale", "done"];
+const PHASES = ["setup", "rules", "writein", "podium", "vote", "reveal", "snitch", "defend", "board", "finale", "done"];
 let S = blankState();
 let stateSeen = false;
 let mode = null;                 // "host" | "player" | null (landing)
 let net = "idle";
 let firstBuild = true;
-let lockUntil = 0;               // ignore advance clicks/keys while the next screen animates in
+let lockUntil = 0;
+let chimedFor = "", lastTick = -1;               // ignore advance clicks/keys while the next screen animates in
 
 // host-local (never broadcast)
 const votes = new Map();         // voter key -> {pick, dd}
@@ -674,7 +715,8 @@ try { myVote = JSON.parse(LS.get("fsg.vote") || "null"); } catch (e) { myVote = 
 let renaming = false, kicked = false, pnotice = "";
 try { myJury = JSON.parse(LS.get("fsg.jury") || "null"); } catch (e) { myJury = null; }
 let clockOffset = 0;
-let myDD = 0;                    // my Double Downs left (told privately by the host)             // host clock minus phone clock
+let myDD = 0;
+let oracleOpen = false;                    // my Double Downs left (told privately by the host)             // host clock minus phone clock
 
 function sanitizeState(d) {
   if (!d || typeof d !== "object" || !PHASES.includes(d.phase)) return null;
@@ -713,7 +755,8 @@ function sanitizeState(d) {
     cohost: typeof d.cohost === "string" ? d.cohost.slice(0, 60) : null,
     paused: !!d.paused, locked: !!d.locked,
     pending: Array.isArray(d.pending) ? d.pending.filter(p => p && typeof p.key === "string").slice(0, 10).map(p => ({ key: p.key.slice(0, 60), name: cleanName(p.name) || "Someone" })) : [],
-    opts: { snitch: o.snitch !== false, defend: o.defend !== false, dd: o.dd !== false, oracle: o.oracle !== false, writein: o.writein !== false },
+    opts: { snitch: o.snitch !== false, defend: o.defend !== false, dd: o.dd !== false, oracle: o.oracle !== false, writein: o.writein !== false, board: o.board === "every" ? "every" : "smart", wcap: [0, 2, 3, 4, 6].includes(o.wcap) ? o.wcap : 4 },
+    writers: Array.isArray(d.writers) ? d.writers.filter(k => typeof k === "string").slice(0, 60) : [], writeEnds: +d.writeEnds || 0, podium: Number.isInteger(d.podium) ? d.podium : 0,
     authors: strMap(d.authors), wi: Array.isArray(d.wi) ? d.wi.filter(Number.isInteger).slice(0, 120) : [], writeAt: Number.isInteger(d.writeAt) ? d.writeAt : -1, writeDone: !!d.writeDone, writeCount: +d.writeCount || 0,
     ddPer: +d.ddPer || 0, defend: dfl, meta,
     fin: Number.isInteger(d.fin) && d.fin >= 0 ? d.fin : 0,
@@ -864,7 +907,7 @@ function onHostData(conn, d) {
     if (S.phase !== "writein") { tell(conn, { t: "nack", why: "write-closed" }); return; }
     const text = cleanText(d.text, 100);
     if (text.length < 3 || /\S{26,}/.test(text)) return;
-    writeins.set(entry.key, text); S.writeCount = writeins.size;
+    writeins.set(entry.key, text); S.writeCount = writeins.size; S.writers = [...writeins.keys()];
     saveHost(); scheduleCommit();
   } else if (d.t === "ctl") {
     if (!inGame || entry.key !== S.cohost) return;
@@ -1113,6 +1156,23 @@ function doReveal() {
   S.phase = "reveal"; ballot = null;
   commit(); sendAllDD();
 }
+function boardDue() {
+  if (S.opts.board === "every") return true;
+  const r = S.results[S.idx];
+  if (S.idx >= S.prompts.length - 1 || S.idx === S.writeAt || (S.idx + 1) % 3 === 0) return true;
+  if (r && (r.snitch || r.defend)) return true;
+  if (S.idx > 0) { const a = standings(S.idx)[0], b = standings(S.idx - 1)[0]; if (a && b && a.key !== b.key && a.pts > 0) return true; }
+  return false;
+}
+function toBoard() {
+  S.defend = null;
+  if (boardDue()) { S.phase = "board"; commit(); }
+  else { S.phase = "board"; nextAward(); }
+}
+function afterBoardLabel() {
+  if (boardDue()) return "Show the leaderboard";
+  return S.idx >= S.prompts.length - 1 ? "On to the finale" : "Next award";
+}
 function trialPlanned() {
   const r = S.results[S.idx];
   return plan.defend.includes(S.idx) && r && r.winners.length === 1 && !r.defend;
@@ -1122,11 +1182,11 @@ function afterReveal() {
   const r = S.results[S.idx];
   if (r && snitchNext[S.idx]) { r.snitch = snitchNext[S.idx]; delete snitchNext[S.idx]; S.phase = "snitch"; commit(); }
   else if (trialPlanned()) startTrial();
-  else { S.phase = "board"; commit(); }
+  else toBoard();
 }
 function afterSnitch() {
   if (S.phase !== "snitch") return;
-  if (trialPlanned()) startTrial(); else { S.phase = "board"; commit(); }
+  if (trialPlanned()) startTrial(); else toBoard();
 }
 function startTrial() {
   const w = S.results[S.idx].winners[0];
@@ -1149,7 +1209,7 @@ function endTrial() {
 function nextAward() {
   if (S.phase !== "board" && S.phase !== "vote") return;
   votes.clear(); preds.clear(); jury.clear(); ballot = null; S.defend = null;
-  if (S.phase === "board" && S.idx === S.writeAt && !S.writeDone) { writeins.clear(); S.writeCount = 0; S.phase = "writein"; commit(); return; }
+  if (S.phase === "board" && S.idx === S.writeAt && !S.writeDone) { writeins.clear(); S.writeCount = 0; S.writers = []; S.writeEnds = Date.now() + CARD_MS + 60000; S.phase = "writein"; commit(); return; }
   S.idx += 1;
   if (S.idx >= S.prompts.length) return enterFinale();
   S.phase = "vote"; startClock();
@@ -1159,13 +1219,17 @@ function closeWriteins() {
   if (S.phase !== "writein") return;
   const nameOf = k => (S.roster.find(r => r.key === k) || {}).name;
   const seen = new Set(S.prompts.map(p => p.toLowerCase()));
+  let added = 0;
+  const cap = S.opts.wcap || 99;
   for (const [k, text] of shuffle([...writeins])) {
+    if (added >= cap) break;
     if (!nameOf(k) || !text || seen.has(text.toLowerCase()) || S.prompts.length >= 120) continue;
+    added += 1;
     seen.add(text.toLowerCase());
     S.prompts.push(text);
     authorsAll[S.prompts.length - 1] = nameOf(k); S.wi.push(S.prompts.length - 1);
   }
-  writeins.clear(); S.writeDone = true; S.writeCount = 0;
+  writeins.clear(); S.writeDone = true; S.writeCount = 0; S.writers = [];
   S.phase = "board";
   nextAward();
 }
@@ -1179,17 +1243,18 @@ function enterFinale() {
   votes.clear(); preds.clear(); jury.clear(); ballot = null; S.defend = null;
   S.idx = S.prompts.length;
   S.meta = computeMeta(); S.fin = 0;
-  S.phase = S.meta.length ? "finale" : "done";
+  S.phase = S.meta.length ? "finale" : podiumOrDone();
   commit(); sendCards();
 }
+function podiumOrDone() { return standings(S.results.length - 1).some(e => e.pts > 0) ? "podium" : "done"; }
 function nextFinale() {
   if (S.phase !== "finale") return;
   S.fin += 1;
-  if (S.fin >= S.meta.length) { S.phase = "done"; }
+  if (S.fin >= S.meta.length) { S.phase = podiumOrDone(); }
   commit();
 }
 function endEarly() {
-  if (S.phase === "setup" || S.phase === "finale" || S.phase === "done") return;
+  if (["setup", "finale", "podium", "done"].includes(S.phase)) return;
   const doneCount = S.results.length;
   if (S.phase === "defend" && S.defend && !S.defend.verdict) endTrial();
   S.prompts = S.prompts.slice(0, doneCount);
@@ -1221,10 +1286,11 @@ function hostAdvance() {
     case "vote": doReveal(); break;
     case "reveal": afterReveal(); break;
     case "snitch": afterSnitch(); break;
-    case "defend": if (!S.defend || S.defend.verdict) { S.defend = null; S.phase = "board"; commit(); } else if (Date.now() >= (S.defend.startsAt || 0) + 8000 || S.paused) endTrial(); break;
+    case "defend": if (!S.defend || S.defend.verdict) { toBoard(); } else if (Date.now() >= (S.defend.startsAt || 0) + 8000 || S.paused) endTrial(); break;
     case "board": nextAward(); break;
     case "writein": closeWriteins(); break;
     case "finale": nextFinale(); break;
+    case "podium": S.phase = "done"; commit(); break;
   }
 }
 function nextLabel() {
@@ -1233,12 +1299,13 @@ function nextLabel() {
     case "setup": return "Start the awards";
     case "rules": return "Let's go";
     case "vote": return "Reveal the winner";
-    case "reveal": return (mode === "host" ? snitchNext[S.idx] : S.results[S.idx] && S.results[S.idx].snitch) || trialPlanned() ? "Continue" : "Show the leaderboard";
-    case "snitch": return trialPlanned() ? "Continue" : "Show the leaderboard";
-    case "defend": return S.defend && !S.defend.verdict ? "Call the verdict now" : "Show the leaderboard";
+    case "reveal": return (mode === "host" ? snitchNext[S.idx] : S.results[S.idx] && S.results[S.idx].snitch) || trialPlanned() ? "Continue" : afterBoardLabel();
+    case "snitch": return trialPlanned() ? "Continue" : afterBoardLabel();
+    case "defend": return S.defend && !S.defend.verdict ? "Call the verdict now" : afterBoardLabel();
     case "board": return S.idx === S.writeAt && !S.writeDone ? "Write-in time" : S.idx >= S.prompts.length - 1 ? "On to the finale" : "Next award";
     case "writein": return `Close write-ins (${S.writeCount} in)`;
-    case "finale": return S.fin >= S.meta.length - 1 ? "Final standings" : "Next";
+    case "finale": return S.fin >= S.meta.length - 1 ? "Crown the champion" : "Next";
+    case "podium": return "Final results";
   }
   return "";
 }
@@ -1258,7 +1325,7 @@ function removePerson(key) {
     votes.delete(v);
     if (p.pick === key) for (const c of conns.values()) if (c.key === v) tell(c.conn, { t: "nack", why: "nominee-gone", g: S.gameId, r: S.idx });
   }
-  writeins.delete(key); S.writeCount = writeins.size;
+  writeins.delete(key); S.writeCount = writeins.size; S.writers = [...writeins.keys()];
   if (S.phase === "defend" && S.defend && S.defend.key === key && !S.defend.verdict) { S.defend.verdict = "hung"; S.results[S.idx].defend = { key, name: S.defend.name, verdict: "hung", guilty: 0, acquit: 0 }; }
   for (const [v, p] of [...preds]) if (v === key || p === key) preds.delete(v);
   jury.delete(key);
@@ -1511,7 +1578,7 @@ function lock(ms) { lockUntil = Math.max(lockUntil, Date.now() + ms); }
 function build() {
   if (!mode) return buildLanding();
   if (mode === "player") return buildPlayer();
-  ({ setup: buildSetup, rules: buildRules, writein: buildWritein, vote: buildVote, reveal: buildReveal, snitch: buildSnitch, defend: buildDefend, board: buildBoard, finale: buildFinale, done: buildDone })[S.phase]();
+  ({ setup: buildSetup, rules: buildRules, writein: buildWritein, podium: buildPodium, vote: buildVote, reveal: buildReveal, snitch: buildSnitch, defend: buildDefend, board: buildBoard, finale: buildFinale, done: buildDone })[S.phase]();
 }
 
 function topbarHTML(label) {
@@ -1614,7 +1681,11 @@ function buildSetup() {
             ${opt("defend", "⚖️ Defend Yourself", "Some winners get 30 seconds to plead their case. The table rules guilty or not.")}
             ${opt("dd", "⚡ Double Down", "Everyone gets one ×2 vote per 7 awards.")}
             ${opt("oracle", "🔮 Oracle Bets", "Guess the winner after voting. +1 if you're right.")}
-            ${opt("writein", "✍️ Write-ins", "Halfway through, everyone writes one award. Added to the end, author revealed. (Needs 4+ awards.)")}
+            <label class="opt sel-opt" for="opt-board"><span>📊</span><span><b>Leaderboard</b><small>Show it after every award, or only every few awards and when something big happens.</small>
+              <select id="opt-board" data-optsel="board"><option value="smart" ${hostOpts.board !== "every" ? "selected" : ""}>Every few awards (recommended)</option><option value="every" ${hostOpts.board === "every" ? "selected" : ""}>After every award</option></select></span></label>
+            <label class="opt sel-opt" for="opt-wcap"><span>✍️</span><span><b>Write-ins played</b><small>How many player-written awards get added to the end.</small>
+              <select id="opt-wcap" data-optsel="wcap">${[[2, "2 random picks"], [3, "3 random picks"], [4, "4 random picks (recommended)"], [6, "6 random picks"], [0, "Everyone's (long!)"]].map(([v, l]) => `<option value="${v}" ${+hostOpts.wcap === v ? "selected" : ""}>${l}</option>`).join("")}</select></span></label>
+            ${opt("writein", "✍️ Write-ins", "Halfway through, everyone writes one award. Random picks get added to the end, author revealed. (Needs 4+ awards.)")}
           </div>
           <button id="start" class="btn primary big" data-act="start">Start the awards</button>
           <p id="startHint" class="fine"></p>
@@ -1626,6 +1697,7 @@ function buildSetup() {
   ta.addEventListener("input", () => { promptText = ta.value; LS.set("fsg.prompts", promptText); renderDynamic(); });
   document.getElementById("rounds").addEventListener("change", e => { rounds = e.target.value; LS.set("fsg.rounds", rounds); renderDynamic(); });
   document.getElementById("shuffle").addEventListener("change", e => { doShuffle = e.target.checked; LS.set("fsg.shuffle", doShuffle ? "1" : "0"); });
+  document.querySelectorAll("[data-optsel]").forEach(el => el.addEventListener("change", () => { hostOpts[el.dataset.optsel] = el.dataset.optsel === "wcap" ? +el.value : el.value; LS.set("fsg.opts", JSON.stringify(hostOpts)); }));
   document.querySelectorAll("[data-opt]").forEach(el => el.addEventListener("change", () => { hostOpts[el.dataset.opt] = el.checked; LS.set("fsg.opts", JSON.stringify(hostOpts)); }));
   document.getElementById("addForm").addEventListener("submit", e => {
     e.preventDefault();
@@ -1639,7 +1711,7 @@ function chaosCardsHTML() {
   if (o.snitch) c.push(["🎰", "Snitch Roulette", "Strikes at random. A wheel picks one voter and their vote goes on the big screen."]);
   if (o.defend) c.push(["⚖️", "Defend Yourself", `Some winners get ${DEFEND_SECS} seconds to plead their case. Guilty: +${PTS_GUILTY}. Acquitted: ${PTS_ACQUIT}.`]);
   if (o.dd) c.push(["⚡", "Double Down", `You have ${plural(S.ddPer, "×2 vote")}. Flip it on after you vote. Nobody sees who used one.`]);
-  if (o.writein && S.writeAt >= 0) c.push(["✍️", "Write-ins", `Halfway through, everyone writes one award on their phone. They're added to the end, and the author gets exposed.`]);
+  if (o.writein && S.writeAt >= 0) c.push(["✍️", "Write-ins", `Halfway through, everyone writes one award. ${o.wcap ? `${o.wcap} random picks are` : "They're all"} played at the end, and the author gets exposed.`]);
   if (o.oracle) c.push(["🔮", "Oracle Bets", `After voting, guess who'll win. +${PTS_ORACLE} if you called it.`]);
   return c.map(([e, t, d], i) => `<div class="chaos-tile" style="--i:${i}"><span class="ce">${e}</span><b>${t}</b><p>${d}</p></div>`).join("");
 }
@@ -1716,7 +1788,9 @@ function revealInner(isHost) {
     const iWon = r && r.winners.some(w => w.key === myKey);
     const pn = v ? (S.roster.find(x => x.key === v.pick) || {}).name || "someone" : null;
     const hit = r && myPred && myPred.g === S.gameId && myPred.r === S.idx && r.oracles.includes(myKey);
-    mine = iWon ? `<p class="p-title after late">That's you! 🏆</p>` : `<p class="mine after late">${pn ? `You voted for ${esc(pn)}${v.dd ? " (×2)" : ""}.` : "You didn't vote this round."}</p>`;
+    const wv = r && r.winners.length ? (r.counts[r.winners[0].key] || 0) : 0;
+    if (r && r.winners.length) mine += `<p class="fine after">${plural(wv, "vote")}${r.dd ? ` (${r.dd === 1 ? "one double down" : r.dd + " double downs"} in play 👀)` : ""}</p>`;
+    mine += iWon ? `<p class="p-title after late">That's you! 🏆</p>` : `<p class="mine after late">${pn ? `You voted for ${esc(pn)}${v.dd ? " (×2)" : ""}.` : "You didn't vote this round."}</p>`;
     if (hit) mine += `<p class="pill after late">🔮 You called it. +${PTS_ORACLE}</p>`;
   }
   return `
@@ -1749,6 +1823,12 @@ function fireConfetti(yes, delay) {
 }
 
 /* ---- Snitch Roulette ---- */
+function snitchQuip(r) {
+  const sn = r && r.snitch; if (!sn) return "";
+  if (r.winners.some(w => w.key === sn.pick)) return "…along with everyone else. Sheep.";
+  if (r.winners.length) return `…and ${esc(sn.pickName)} didn't even win. Awkward.`;
+  return "";
+}
 function chaosCard(emoji, name, rule) {
   return `<div class="chaos-card" aria-hidden="true"><p class="chaos-tag">⚠ Chaos event ⚠</p><p class="chaos-emoji">${emoji}</p><h2 class="chaos-name">${name}</h2><p class="chaos-rule">${rule}</p></div>`;
 }
@@ -1766,6 +1846,7 @@ function buildSnitch() {
         <div class="snitch-result" id="snitchResult">
           <p class="snitch-line"><span class="hl">${esc(sn.voterName)}</span> voted for <span class="hl">${esc(sn.pickName)}</span></p>
           <p class="fine">for “${esc(r.prompt)}”</p>
+          <p class="snitch-quip">${snitchQuip(r)}</p>
         </div>
       </div>
       <div class="actions" id="snitchNext">${nextBtn()}</div>
@@ -1831,6 +1912,8 @@ function ringHTML() {
   return `<div class="ring" aria-live="off"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="52"></circle><circle class="fg" id="dring" cx="60" cy="60" r="52" pathLength="100"></circle></svg><span id="dtimer">${DEFEND_SECS}</span></div>`;
 }
 function updateTimers() {
+  const wt = document.getElementById("wtimer");
+  if (wt && S.writeEnds) { const l = Math.max(0, S.writeEnds - Date.now()); wt.textContent = l > 0 ? `${Math.floor(l / 60000)}:${String(Math.ceil(l / 1000) % 60).padStart(2, "0")}` : "time's up, close when ready"; }
   const t = document.getElementById("dtimer");
   if (!t || !S.defend) return;
   const left = trialLeftMs();
@@ -1838,15 +1921,18 @@ function updateTimers() {
   const ring = document.getElementById("dring");
   if (ring) ring.style.strokeDashoffset = String(100 - (left / (DEFEND_SECS * 1000)) * 100);
   const wrap = t.closest(".ring"); if (wrap) wrap.classList.toggle("hot", left > 0 && left <= 5000);
+  const sec = Math.ceil(left / 1000);
+  if (mode === "host" && left > 0 && left <= 5000 && sec !== lastTick && !S.paused) { lastTick = sec; sfx("tick"); tone(880, 0, .08, "square", .05); }
 }
 function verdictHTML(isHost) {
   const d = S.defend;
-  if (d.verdict === "hung") return `<p class="stamp acquit">MISTRIAL</p><p class="${isHost ? "prompt small" : "fine"} after">Nobody voted. ${esc(d.name)} gets off on a technicality. No points.</p>`;
+  if (d.verdict === "hung") return `<p class="verdict-name">${esc(d.name)}:</p><p class="stamp acquit">MISTRIAL</p><p class="${isHost ? "prompt small" : "fine"} after-v">Nobody voted. ${esc(d.name)} gets off on a technicality. No points.</p>`;
   const g = d.verdict === "guilty";
   const pts = g ? `+${PTS_GUILTY}` : `${PTS_ACQUIT}`;
   return `
+    <p class="verdict-name">${esc(d.name)}:</p>
     <p class="stamp ${g ? "guilty" : "acquit"}">${g ? "GUILTY" : "ACQUITTED"}</p>
-    <p class="${isHost ? "prompt small" : "fine"} after">${esc(d.name)} ${g ? "is guilty as charged" : "walks free"} · jury ${d.guilty}–${d.acquit} · ${pts} pts</p>`;
+    <p class="${isHost ? "prompt small" : "fine"} after-v">${esc(d.name)} ${g ? "is guilty as charged" : "walks free"} · jury ${d.guilty}–${d.acquit} · ${pts} pts</p>`;
 }
 function buildDefend() {
   const d = S.defend, r = S.results[S.idx];
@@ -1872,7 +1958,7 @@ function buildDefend() {
         <p class="winner ${longCls(d.name)}">${esc(d.name)}</p>
         <p class="prompt small">stands accused of “${esc(r ? r.prompt : "")}”</p>
         ${ringHTML()}
-        <p class="fine">Make your case, ${esc(d.name)}. Everyone else: vote <b>Guilty</b> or <b>Not guilty</b> on your phone.</p>
+        <p class="fine">Make your case, ${esc(d.name)}: own it or deny it. Everyone else rules on their phone. <b>Guilty = +${PTS_GUILTY}</b> for them, <b>Not guilty = ${PTS_ACQUIT}</b>.</p>
         <p class="tally"><span id="djury" class="big-num">0</span><span>jury votes in</span></p>
       </div>
       <div class="actions">${nextBtn()}</div>
@@ -1891,8 +1977,9 @@ function buildWritein() {
       <div class="center">
         <p class="q-eyebrow">✍️ Write-in time</p>
         <h1 class="prompt">Write your own award on your phone</h1>
-        <p class="prompt small">Inside jokes encouraged. They get added to the end of the game, and when yours comes up, <b>everyone finds out you wrote it</b>.</p>
-        <p class="tally"><span id="wcount" class="big-num">${S.writeCount}</span><span>written so far</span></p>
+        <p class="prompt small">Inside jokes encouraged. ${S.opts.wcap ? `${S.opts.wcap} random picks` : "They all"} get played at the end, and when yours comes up, <b>everyone finds out you wrote it</b>.</p>
+        <p class="tally"><span id="wcount" class="big-num">${S.writeCount}</span><span>written · <span id="wtimer">1:00</span></span></p>
+        <ul id="writers" class="chips voters" aria-label="Who has written one"></ul>
       </div>
       <div class="actions">${nextBtn()}</div>
       ${animate ? chaosCard("✍️", "Write-in time", "Everyone writes one award. They go to the end of the game. The author gets exposed when it comes up.") : ""}
@@ -1905,6 +1992,7 @@ function lbHTML(cur, prev, opts) {
   const max = Math.max(1, ...cur.map(e => e.pts));
   let rows = cur.slice(0, opts.limit);
   if (opts.me) { const mine = cur.find(e => e.key === opts.me); if (mine && !rows.includes(mine)) rows = rows.concat(mine); }
+  const more = cur.length - rows.length;
   if (!rows.length) return `<p class="empty">Nobody on the board yet.</p>`;
   return `<ol class="lb">${rows.map((e, i) => {
     const p = prevMap.get(e.key);
@@ -1918,11 +2006,11 @@ function lbHTML(cur, prev, opts) {
       <span class="meta"><b>${e.pts}</b> pt${e.pts === 1 ? "" : "s"}</span>
       <span class="mv ${mv > 0 ? "up" : mv < 0 ? "down" : ""}">${mv > 0 ? "▲" + mv : mv < 0 ? "▼" + (-mv) : ""}</span>
     </li>`;
-  }).join("")}</ol>`;
+  }).join("")}${more > 0 ? `<li class="more"><span></span><span class="nm">+${more} more</span></li>` : ""}</ol>`;
 }
 function hostRows() {
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-  return Math.max(3, Math.min(10, Math.floor((window.innerHeight - 15 * rem) / (4.1 * rem))));
+  return Math.max(3, Math.min(8, Math.floor((window.innerHeight - 18 * rem) / (5 * rem))));
 }
 function settleBars(root, animate) {
   const go = () => root.querySelectorAll(".lb .fill[data-to]").forEach(f => { f.style.width = f.dataset.to + "%"; });
@@ -1934,7 +2022,7 @@ function boardInner(isHost, animate) {
   const sub = `After ${S.idx + 1} of ${S.prompts.length} awards${wt ? ` · ${esc(wt)} just took one home` : ""}`;
   if (isHost) return `<p class="q-eyebrow">Leaderboard</p><p class="fine">${sub}</p>${lbHTML(cur, prev, { limit: hostRows(), animate })}<p class="fine">${RULE_LINE}</p>`;
   const me = cur.find(e => e.key === myKey);
-  const head = !me ? "" : me.pts <= 0 ? `<h1 class="p-title">Not on the board yet</h1>` : `<h1 class="p-title">You're #${me.rank}</h1><p class="fine">${plural(me.pts, "point")} so far.</p>`;
+  const head = !me ? "" : me.pts <= 0 ? `<h1 class="p-title">Not on the board yet</h1>` : `<h1 class="p-title">${(() => { const t = cur.filter(e => e.rank === me.rank).length; return t > 1 ? `Tied for #${me.rank}` : `You're #${me.rank}`; })()}</h1>${(() => { const t = cur.filter(e => e.rank === me.rank).length; return t > 1 ? `<p class="fine">with ${plural(t - 1, "other")}</p>` : ""; })()}<p class="fine">${plural(me.pts, "point")} so far.</p>`;
   return `<p class="q-eyebrow">Leaderboard</p>${head}${lbHTML(cur, prev, { limit: 5, me: myKey, animate })}<p class="fine">${RULE_LINE}</p>`;
 }
 function buildBoard() {
@@ -1947,6 +2035,32 @@ function buildBoard() {
       <div class="actions">${nextBtn()}</div>
     </main>`;
   settleBars(app, animate);
+}
+
+/* ---- Champion podium ---- */
+function podiumHTML(isHost) {
+  const fin = standings(S.results.length - 1);
+  const ranks = [3, 2, 1].map(n => fin.filter(e => e.rank === n && e.pts > 0)).map((arr, i) => ({ place: 3 - i, arr }));
+  const label = { 1: "Your champion", 2: "Second place", 3: "Third place" };
+  return `<p class="q-eyebrow">Friendsgiving ${YEAR}</p>
+    <div class="podium ${isHost ? "" : "small"}">${ranks.filter(x => x.arr.length).map(x => `
+      <div class="pod p${x.place}">
+        <p class="pod-label">${label[x.place]}</p>
+        <p class="pod-name ${x.place === 1 ? "winner" : ""} ${x.arr.length > 1 ? "tie" : longCls(x.arr[0].name)}">${x.arr.map(e => esc(e.name)).join(" &amp; ")}</p>
+        <p class="pod-pts">${plural(x.arr[0].pts, "pt")}${x.arr.some(e => e.key === myKey) && !isHost ? " · that's you!" : ""}</p>
+      </div>`).join("")}</div>`;
+}
+function buildPodium() {
+  const animate = animating();
+  if (animate) { lock(5000); sfx("countdown"); setTimeout(() => sfx("fanfare"), 3600); }
+  app.innerHTML = `
+    <main class="stage ${animate ? "animate-pod" : ""}">
+      ${topbarHTML("And the night's champion is…")}
+      <div class="center">${podiumHTML(true)}</div>
+      <div class="actions pod-next">${nextBtn()}</div>
+      <canvas class="confetti" id="confetti"></canvas>
+    </main>`;
+  fireConfetti(true, animate ? 3800 : 0);
 }
 
 /* ---- Finale ---- */
@@ -2048,7 +2162,7 @@ function buildPlayer() {
     body = `<div class="p-body ${animate ? "chaos-run" : "chaos-still"}">
       <p class="q-eyebrow">✍️ Write-in time</p>
       <h1 class="p-title">Write an award</h1>
-      <p class="fine">It gets played at the end of the game. When it comes up, your name goes on the screen. Make it count.</p>
+      <p class="fine">${S.opts.wcap ? `${S.opts.wcap} random write-ins get played at the end.` : "Every write-in gets played at the end."} If yours comes up, your name goes on the screen. Make it count.</p>
       <form id="writeForm" class="name-form" autocomplete="off">
         <label for="writeInput" class="sr">Your award</label>
         <textarea id="writeInput" maxlength="100" rows="3" placeholder="Most likely to…">${esc(mine)}</textarea>
@@ -2057,6 +2171,7 @@ function buildPlayer() {
       <p class="fine" id="writeStatus">${mine ? "Locked in. You can still edit it until the host closes write-ins." : ""}</p>${note}</div>`;
   } else if (S.phase === "vote") {
     const w = words(S.prompts[S.idx]);
+    oracleOpen = false;
     if (animate) lock(w.end * 1000 + 200);
     body = `<div class="p-body ${animate ? "intro" : ""}" style="--qd:${w.end.toFixed(2)}s">
       <p class="q-eyebrow">${S.wi.includes(S.idx) ? "✍️ Write-in · " : ""}Award #${S.idx + 1} of ${S.prompts.length}</p>
@@ -2072,12 +2187,14 @@ function buildPlayer() {
     body = `<div class="p-body mid ${animate ? "chaos-run" : "chaos-still"}">
       <p class="q-eyebrow">🎰 Snitch Roulette</p>
       <div class="spin-head"><h1 class="p-title">The wheel is spinning…</h1><p class="fine">Eyes on the TV. Somebody's vote is about to go public.</p></div>
-      ${sn ? `<div class="snitch-result p-late"><p class="snitch-line"><span class="hl">${esc(sn.voterName)}</span> voted for <span class="hl">${esc(sn.pickName)}</span></p>${meExposed ? `<p class="pill">That's you. Busted.</p>` : ""}</div>` : ""}${note}</div>`;
+      ${sn ? `<div class="snitch-result p-late"><p class="snitch-line"><span class="hl">${esc(sn.voterName)}</span> voted for <span class="hl">${esc(sn.pickName)}</span></p><p class="snitch-quip">${snitchQuip(S.results[S.idx])}</p>${meExposed ? `<p class="pill">That's you. Busted.</p>` : ""}</div>` : ""}${note}</div>`;
   } else if (S.phase === "defend") {
     const d = S.defend;
     if (d && d.verdict) body = `<div class="p-body mid ${animate ? "animate" : ""}"><p class="q-eyebrow">⚖️ The verdict</p>${verdictHTML(false)}${note}</div>`;
-    else if (d && d.key === myKey) body = `<div class="p-body mid"><p class="q-eyebrow">⚖️ You're on trial</p><h1 class="p-title">Talk. Now.</h1><p class="fine">You won “${esc(S.prompts[S.idx] || "")}”. You have ${DEFEND_SECS} seconds to convince the table you're innocent.</p>${ringHTML()}${note}</div>`;
-    else if (d) body = `<div class="p-body mid"><p class="q-eyebrow">⚖️ You're the jury</p><h1 class="p-title">${esc(d.name)} is on trial</h1><p class="fine">for “${esc(S.prompts[S.idx] || "")}”. Hear them out, then rule.</p>${ringHTML()}<div class="jury" id="jurybtns"></div>${note}</div>`;
+    else if (d && d.key === myKey) body = `<div class="p-body mid"><p class="q-eyebrow">⚖️ You're on trial</p><h1 class="p-title">Talk. Now.</h1><p class="fine">You won “${esc(S.prompts[S.idx] || "")}”. ${DEFEND_SECS} seconds. Own it (+${PTS_GUILTY} if they convict) or deny it (${PTS_ACQUIT} if they let you off).</p>${ringHTML()}${note}</div>`;
+    else if (d) body = `<div class="p-body mid"><p class="q-eyebrow">⚖️ You're the jury</p><h1 class="p-title">${esc(d.name)} is on trial</h1><p class="fine">for “${esc(S.prompts[S.idx] || "")}”. Hear them out, then rule.</p>${ringHTML()}<div class="jury" id="jurybtns"></div><p class="fine jury-key">GUILTY = +${PTS_GUILTY} for them · NOT GUILTY = ${PTS_ACQUIT}</p>${note}</div>`;
+  } else if (S.phase === "podium") {
+    body = `<div class="p-body mid ${animate ? "animate-pod" : ""}">${podiumHTML(false)}${note}</div>`;
   } else if (S.phase === "board") {
     body = `<div class="p-body ${animate ? "animate-board" : ""}" id="boardBody">${boardInner(false, animate)}${note}</div>`;
   } else if (S.phase === "finale") {
@@ -2172,11 +2289,18 @@ function renderDynamic() {
     const vc = document.getElementById("vcount"); if (vc) vc.textContent = votes.size;
     const voterKeys = new Set(S.roster.filter(r => online.has(r.key) || votes.has(r.key) || r.key.startsWith("x:")).map(r => r.key));
     const vt = document.getElementById("vtotal"); if (vt) vt.textContent = Math.max(voterKeys.size, votes.size);
+    const all = votes.size > 0 && votes.size >= voterKeys.size;
+    document.querySelectorAll('#app [data-act="next"]').forEach(b => b.classList.toggle("pulse", all));
+    if (all && chimedFor !== S.gameId + ":" + S.idx) { chimedFor = S.gameId + ":" + S.idx; sfx("win"); }
     const ul = document.getElementById("voters");
     if (ul) ul.innerHTML = S.roster.filter(r => voterKeys.has(r.key)).map(r => `<li class="chip ${votes.has(r.key) ? "voted" : ""}"><span class="nm">${esc(r.name)}</span></li>`).join("");
     renderBallot();
   }
-  if (mode === "host" && S.phase === "writein") { const wc = document.getElementById("wcount"); if (wc) wc.textContent = S.writeCount; }
+  if (mode === "host" && S.phase === "writein") {
+    const wc = document.getElementById("wcount"); if (wc) wc.textContent = S.writeCount;
+    const ul = document.getElementById("writers");
+    if (ul) ul.innerHTML = S.roster.map(r => `<li class="chip ${S.writers.includes(r.key) ? "voted" : ""}"><span class="nm">${esc(r.name)}</span></li>`).join("");
+  }
   if (mode === "host" && S.phase === "defend") {
     const dj = document.getElementById("djury"); if (dj) dj.textContent = jury.size;
   }
@@ -2202,11 +2326,13 @@ function renderDynamic() {
         if (v && S.opts.dd) {
           const left = myDD;
           html += `<button class="dd-toggle ${v.dd ? "on" : ""}" data-act="dd" ${left <= 0 && !v.dd ? "disabled" : ""} aria-pressed="${v.dd ? "true" : "false"}">
-            <span>⚡ Double Down ${v.dd ? "ON" : "off"}</span><small>${left <= 0 ? "None left" : `${plural(left, "left")} · makes this vote count ×2`}</small></button>`;
+            <span>⚡ Double Down ${v.dd ? "ON" : "off"}</span><small>${v.dd ? `×2 is on · ${Math.max(0, left - 1)} left after this` : left <= 0 ? "None left" : `${left} left · makes this vote count ×2`}</small></button>`;
         }
         if (v && S.opts.oracle) {
           const pp = myPred && myPred.g === S.gameId && myPred.r === S.idx ? myPred.pick : null;
-          html += `<div class="oracle"><p class="oracle-head">🔮 Oracle bet: who'll actually win? <small>+${PTS_ORACLE} if you're right</small></p>
+          const pn2 = pp ? (S.roster.find(r => r.key === pp) || {}).name : "";
+          if (!oracleOpen) html += `<button class="oracle-toggle" data-act="oracle-open">${pp ? `🔮 You bet on <b>${esc(pn2)}</b> · change` : `🔮 Bet on the winner (+${PTS_ORACLE})`}</button>`;
+          else html += `<div class="oracle"><p class="oracle-head">🔮 Oracle bet: who'll actually win? <small>+${PTS_ORACLE} if you're right</small></p>
             <div class="oracle-chips">${S.roster.filter(r => r.key !== myKey).map(r => `<button class="ochip ${pp === r.key ? "sel" : ""}" data-act="pred" data-key="${esc(r.key)}">${esc(r.name)}</button>`).join("")}</div></div>`;
         }
         ex.innerHTML = html;
@@ -2332,7 +2458,8 @@ document.addEventListener("click", e => {
     case "b-close": ballot = null; renderBallot(); break;
     case "vote": if (key && S.phase === "vote") castVote(key); break;
     case "dd": toggleDD(); break;
-    case "pred": if (key && S.phase === "vote") castPred(key); break;
+    case "pred": if (key && S.phase === "vote") { oracleOpen = false; castPred(key); } break;
+    case "oracle-open": oracleOpen = true; renderDynamic(); break;
     case "jury": if (key === "g" || key === "a") castJury(key); break;
     case "co-next": send({ t: "ctl", act: "next" }); break;
     case "co-pause": send({ t: "ctl", act: S.paused ? "resume" : "pause" }); break;
